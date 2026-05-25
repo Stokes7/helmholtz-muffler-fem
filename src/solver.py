@@ -15,9 +15,7 @@ groups = gmsh.model.getPhysicalGroups()
 print(f"Physical groups found: {groups}")
 
 domain, cell_tags, facet_tags, _, _, _ = dolfinx_gmsh.model_to_mesh(
-    gmsh.model,
-    MPI.COMM_WORLD,
-    rank=0,
+    gmsh.model, MPI.COMM_WORLD, rank=0,
     gdim=2
 )
 
@@ -89,7 +87,7 @@ print("  ds(3) = wall    (tag 3) -- will vanish naturally")
 # Bilinear form a(p, v)
 # Term 1: ∫ ∇p·∇v dΩ        — from integration by parts
 # Term 2: −k² ∫ p·v dΩ      — Helmholtz term
-# Term 3: jωρ₀/Z ∫ p·v dS   — Robin BC at outlet (anechoic)
+# Term 3: −jωρ₀/Z ∫ p·v dS  — Robin BC at outlet (anechoic, absorbs outgoing wave)
 a = (
       ufl.inner(ufl.grad(p), ufl.grad(v)) * dx
     - k**2 * ufl.inner(p, v) * dx
@@ -105,11 +103,6 @@ print("  a(p,v) : bilinear form assembled")
 print("  L(v)   : linear form assembled")
 
 
-
-# %% Verification ─────────────────────────────────────────────────────────
-from petsc4py import PETSc
-
-print(f"PETSc scalar type: {PETSc.ScalarType}")
 
 
 # %% ── 5. Solver ──────────────────────────────────────────────────────────
@@ -159,7 +152,7 @@ grid["Im(p)"] = p_h.x.array.imag
 grid["|p|"]   = np.abs(p_h.x.array)
 
 # Plot
-plotter = pv.Plotter(shape=(1, 3), window_size=(1800, 400))
+plotter = pv.Plotter(shape=(1, 3), window_size=(1800, 400), off_screen=True)
 
 plotter.subplot(0, 0)
 plotter.add_mesh(grid.copy(), scalars="Re(p)", cmap="RdBu_r", show_edges=False)
@@ -176,18 +169,51 @@ plotter.add_mesh(grid.copy(), scalars="Im(p)", cmap="RdBu_r", show_edges=False)
 plotter.add_text(f"Im(p)  {f:.0f} Hz", font_size=10)
 plotter.view_xy()
 
-plotter.show()
+plotter.screenshot("Projects/helmholtz-muffler-fem/results/pressure_field.png")
+
+
+
+# %% ── 6. Compute Transmission Loss ──────────────────────────────────────
+
+# Area-averaged pressure at inlet and outlet
+# ∫ p dS / ∫ 1 dS
+one = fem.Constant(domain, complex(1.0))
+inlet_length  = fem.assemble_scalar(fem.form(one * ds(1)))
+outlet_length = fem.assemble_scalar(fem.form(one * ds(2)))
+
+p_inlet_avg  = fem.assemble_scalar(fem.form(p_h * ds(1))) / inlet_length
+p_outlet_avg = fem.assemble_scalar(fem.form(p_h * ds(2))) / outlet_length
+
+# Incident pressure (decompose total into incident + reflected)
+p_inc = (p_inlet_avg - rho0 * c0 * vn) / 2.0
+
+# Transmission Loss
+TL_fem = 20 * np.log10(np.abs(p_inc) / np.abs(p_outlet_avg))
+
+# Analytical TL for comparison
+# Physical parameters
+L_in  = 0.10   # inlet pipe length  [m]
+L_ch   = 0.20   # chamber length     [m]
+L_out = 0.10   # outlet pipe length [m]
+r     = 0.025  # pipe half-height   [m]
+R     = 0.05   # chamber half-height [m]
+h     = 0.005   # mesh size
+
+m = R / r   # area ratio for 2D planar
+TL_analytical = 10 * np.log10(1 + 0.25 * (m - 1/m)**2 * np.sin(k * L_ch)**2)
+
+print(f"p_inlet_avg  = {p_inlet_avg:.4e}")
+print(f"p_outlet_avg = {p_outlet_avg:.4e}")
+print(f"p_incident   = {p_inc:.4e}")
+print(f"TL FEM       = {TL_fem:.4f} dB")
+print(f"TL analytical= {TL_analytical:.4f} dB")
+print(f"Error        = {abs(TL_fem - TL_analytical):.4f} dB")
 
 
 
 
 
-# %% ── 7. Cleanup ────────────────────────────────────────────────────────
-print("First 3 quads node indices:")
-print(quad_conn[:3])
-print("Their coordinates:")
-for q in quad_conn[:3]:
-    print(coords[q])
+
 
 
 # %% ── 7. Cleanup ────────────────────────────────────────────────────────
