@@ -1,0 +1,3 @@
+gmsh/mesh/
+__pycache__/
+*.pyc
