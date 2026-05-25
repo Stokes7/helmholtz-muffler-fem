@@ -1,5 +1,4 @@
 # %% ── 1. Initializing Model ─────────────────────────────────────────────
-
 import gmsh
 
 # Physical parameters
@@ -22,6 +21,7 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
         gmsh.finalize()
         
     gmsh.initialize()
+    gmsh.option.setNumber("General.Terminal", 0)  # Silence all Gmsh console output
     gmsh.model.add("simple_duct")
  
     # ── 2. Create the geometry using the OCC kernel ───────────────────────
@@ -41,7 +41,7 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
     gmsh.model.occ.synchronize()
 
     domain_tag = out[0][1]
-    print(f"Domain tag after fuse: {domain_tag}")
+    # print(f"Domain tag after fuse: {domain_tag}")
 
     # ── 3. Find and classify the boundary edges ───────────────────────────
 
@@ -49,7 +49,7 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
     # the boundary of our surface.  dim=1 means a curve (edge).
 
     curves = gmsh.model.getBoundary([(2, domain_tag)], oriented=False)
-    print(f"Found {len(curves)} boundary curves: {curves}")
+    # print(f"Found {len(curves)} boundary curves: {curves}")
     # For a rectangle you should see exactly 4 curves.
      
     inlet_tags  = []
@@ -61,7 +61,7 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
     for dim, tag in curves:
         # getCenterOfMass returns (x, y, z) of the midpoint of the curve.
         xc, yc, _ = gmsh.model.occ.getCenterOfMass(dim, tag)
-        print(f"  curve tag={tag:3d}  centre=({xc:.4f}, {yc:.4f})")
+        # print(f"  curve tag={tag:3d}  centre=({xc:.4f}, {yc:.4f})")
      
         if abs(xc - 0.0) < tol:
             inlet_tags.append(tag)
@@ -70,9 +70,9 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
         else:
             wall_tags.append(tag)
      
-    print(f"inlet_tags  = {inlet_tags}")
-    print(f"outlet_tags = {outlet_tags}")
-    print(f"wall_tags   = {wall_tags}")
+    # print(f"inlet_tags  = {inlet_tags}")
+    # print(f"outlet_tags = {outlet_tags}")
+    # print(f"wall_tags   = {wall_tags}")
 
     # ── 4. Define physical groups ─────────────────────────────────────────
     # addPhysicalGroup(dim, [list of entity tags], tag=N)
@@ -119,10 +119,11 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
     gmsh.finalize()
     return domain, cell_tags, facet_tags
 
-
+# %% ── 6. Run ─────────────────────────────────────────────
 if __name__ == "__main__":
-    h     = 0.001   # mesh size
+    h     = 0.002   # mesh size
     output_path = "Projects/helmholtz-muffler-fem/gmsh/mesh/simple_duct.msh"
     print(f"Generating mesh with h = {h} m...")
     generate_muffler_mesh(h, output_file=output_path, recombine_quads=True)
     print(f"Mesh saved successfully to: {output_path}")
+    # %%

@@ -66,7 +66,7 @@ ax.autoscale()
 ax.set_aspect("equal")
 ax.set_xlabel("x [m]")
 ax.set_ylabel("y [m]")
-ax.set_title(f"Simple duct mesh  (h = {h} m,  {len(xy)} nodes,  {len(conn_quads)} quads)")
+ax.set_title(f"Simple duct mesh  (h = {1} m,  {len(xy)} nodes,  {len(conn_quads)} quads)")
 ax.legend(loc="upper right", fontsize=9)
 plt.show()
 

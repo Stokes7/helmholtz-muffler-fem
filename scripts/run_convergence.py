@@ -13,18 +13,19 @@ from dolfinx import fem
 from mpi4py import MPI
 
 # Import our modular geometry and solver components!
-sys.path.append(os.path.abspath("Projects/helmholtz-muffler-fem/gmsh"))
-sys.path.append(os.path.abspath("Projects/helmholtz-muffler-fem/src"))
+project_root = "/home/zp252136/lectures/modern_simulation_software_development/Projects/helmholtz-muffler-fem"
+sys.path.append(os.path.join(project_root, "gmsh"))
+sys.path.append(os.path.join(project_root, "src"))
 from geometry import generate_muffler_mesh
 
 from solver import HelmholtzSolver
 
 # Ensure results folder exists
-os.makedirs("Projects/helmholtz-muffler-fem/results/figures", exist_ok=True)
+os.makedirs(os.path.join(project_root, "results/figures"), exist_ok=True)
 
 # %% ── 2. Run Reference Solution (Ultra-Fine Mesh) ────────────────────────
 f_test = 500.0
-h_ref = 0.0005  # extremely fine reference mesh (~20k DOFs in 2D)
+h_ref = 0.0002  # extremely fine reference mesh (~20k DOFs in 2D)
 
 print(f"Generating reference solution on ultra-fine mesh (h = {h_ref} m)...")
 domain_ref, _, facet_tags_ref = generate_muffler_mesh(h_ref, recombine_quads=False)
@@ -36,7 +37,7 @@ print(f"Reference TL       : {TL_ref:.6f} dB\n")
 
 
 # %% ── 3. Mesh Refinement Sweep ───────────────────────────────────────────
-h_sizes = [0.02, 0.01, 0.005, 0.0025]
+h_sizes = [0.02, 0.01, 0.005, 0.0025, 0.00125, 0.000625]
 L2_errors  = []
 H1_errors  = []
 TL_errors  = []
@@ -77,7 +78,7 @@ for h in h_sizes:
     l2_err = np.sqrt(domain_h.comm.allreduce(fem.assemble_scalar(fem.form(ufl.inner(diff_p, diff_p) * dx_h)).real, op=MPI.SUM))
     L2_errors.append(l2_err)
     
-    # H1 semi-norm Error (gradient difference)
+    # H1 norm Error
     diff_grad = ufl.grad(solver_h.p_h) - ufl.grad(p_ref_interpolated)
     h1_err = np.sqrt(domain_h.comm.allreduce(fem.assemble_scalar(fem.form(ufl.inner(diff_grad, diff_grad) * dx_h)).real, op=MPI.SUM))
     H1_errors.append(h1_err)
@@ -95,7 +96,7 @@ slope_TL = np.polyfit(np.log(h_sizes), np.log(TL_errors), 1)[0]
 
 print("\nEstimated Convergence Rates (Slopes on log-log scale):")
 print(f"  L2 Error Rate        : {slope_L2:.3f}   (Theoretical P1: ~2.0)")
-print(f"  H1 semi-norm Rate    : {slope_H1:.3f}   (Theoretical P1: ~1.0)")
+print(f"  H1 Full Error Rate   : {slope_H1:.3f}   (Theoretical P1: ~1.0)")
 print(f"  TL Scalar Error Rate : {slope_TL:.3f}")
 
 
@@ -104,8 +105,8 @@ fig, ax = plt.subplots(figsize=(8, 6))
 
 # Plot measured errors
 ax.loglog(h_sizes, L2_errors, "bo-", linewidth=1.5, markersize=6, label=f"L2 Error (slope={slope_L2:.2f})")
-ax.loglog(h_sizes, H1_errors, "rs-", linewidth=1.5, markersize=6, label=f"H1 semi-norm Error (slope={slope_H1:.2f})")
-ax.loglog(h_sizes, TL_errors, "g^-", linewidth=1.5, markersize=6, label=f"TL Scalar Error (slope={slope_TL:.2f})")
+ax.loglog(h_sizes, H1_errors, "rs-", linewidth=1.5, markersize=6, label=f"H1 Error (slope={slope_H1:.2f})")
+# ax.loglog(h_sizes, TL_errors, "g^-", linewidth=1.5, markersize=6, label=f"TL Scalar Error (slope={slope_TL:.2f})")
 
 # Plot theoretical references
 h_ref_lines = np.array(h_sizes)
@@ -122,6 +123,6 @@ ax.grid(True, which="both", linestyle=":", alpha=0.6)
 ax.legend(loc="lower right", frameon=True, fontsize=10)
 
 plt.tight_layout()
-fig_output = "Projects/helmholtz-muffler-fem/results/figures/mesh_convergence.png"
+fig_output = os.path.join(project_root, "results/figures/mesh_convergence.png")
 plt.savefig(fig_output, dpi=150)
 print(f"\nConvergence log-log plot successfully saved to: {fig_output}")
