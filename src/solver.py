@@ -1,9 +1,11 @@
+# %% ── 1. Import Libraries ──────────────────────────────────
 import numpy as np
 import ufl
 from dolfinx import fem
 from dolfinx.fem.petsc import LinearProblem
 
 
+# %% ── 2. Helmholtz Solver Class ─────────────────────────────────────────
 class HelmholtzSolver:
     def __init__(self, domain, facet_tags, rho0=1.21, c0=343.0, vn=1e-3):
         """
