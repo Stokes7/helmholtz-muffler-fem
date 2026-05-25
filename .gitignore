@@ -1,3 +1,9 @@
 gmsh/mesh/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+.pytest_cache/
+results/
+*.log
