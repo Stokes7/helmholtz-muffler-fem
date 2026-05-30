@@ -19,11 +19,13 @@ jobs:
       - name: Install Python dependencies
         run: |
           export CC=gcc
+          source /usr/local/bin/dolfinx-complex-mode
           pip install -r requirements.txt
 
       - name: Run pytest
         run: |
           export CC=gcc
+          source /usr/local/bin/dolfinx-complex-mode
           pytest test/
 
   deploy:
