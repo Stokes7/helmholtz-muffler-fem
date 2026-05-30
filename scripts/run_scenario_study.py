@@ -9,15 +9,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Append paths to search local modules
-sys.path.append(os.path.abspath("Projects/helmholtz-muffler-fem/gmsh"))
-sys.path.append(os.path.abspath("Projects/helmholtz-muffler-fem/src"))
+from pathlib import Path
+project_root = Path(__file__).resolve().parent.parent
+
+sys.path.append(str(project_root / "gmsh"))
+sys.path.append(str(project_root / "src"))
 from geometry import generate_muffler_mesh
 from geometry_extended import generate_extended_mesh
 
 from solver import HelmholtzSolver
 
 # Ensure output directories exist
-os.makedirs("Projects/helmholtz-muffler-fem/results/figures", exist_ok=True)
+figures_dir = project_root / "results" / "figures"
+figures_dir.mkdir(parents=True, exist_ok=True)
 
 h_size = 0.005  # Standard mesh size for fast, highly resolved sweep
 f_opt = 1200.0  # Targeted optimization frequency (Hz)
@@ -74,9 +78,9 @@ ax.set_ylim(-2, 70)
 ax.grid(True, which="both", linestyle=":", alpha=0.6)
 ax.legend(loc="upper right", frameon=True, fontsize=10)
 
-fig_output = "Projects/helmholtz-muffler-fem/results/figures/extended_tl_comparison.png"
+fig_output = figures_dir / "extended_tl_comparison.png"
 plt.tight_layout()
-plt.savefig(fig_output, dpi=150)
+plt.savefig(str(fig_output), dpi=150)
 print(f"\n[SUCCESS] Spectrum comparison plot saved to: {fig_output}")
 
 
@@ -123,9 +127,9 @@ ax2.set_title(f"Acoustic Optimization Heatmap at {f_opt:.0f} Hz", fontsize=13, f
 ax2.grid(True, linestyle=":", alpha=0.5)
 ax2.legend(loc="upper right", frameon=True)
 
-opt_fig_output = "Projects/helmholtz-muffler-fem/results/figures/length_optimization_2d.png"
+opt_fig_output = figures_dir / "length_optimization_2d.png"
 plt.tight_layout()
-plt.savefig(opt_fig_output, dpi=150)
+plt.savefig(str(opt_fig_output), dpi=150)
 print(f"[SUCCESS] 2D Optimization Heatmap saved to: {opt_fig_output}")
 print(f"Optimal Design Found: L_ext_in = {opt_in:.3f} m, L_ext_out = {opt_out:.3f} m yielding TL = {opt_tl:.3f} dB!")
 
@@ -173,7 +177,7 @@ plotter.add_mesh(grid.copy(), scalars="Im(p)", cmap="RdBu_r", show_edges=False)
 plotter.add_text("Im(p) at 1715 Hz", font_size=10)
 plotter.view_xy()
 
-screenshot_path = "Projects/helmholtz-muffler-fem/results/figures/extended_pressure_field.png"
-plotter.screenshot(screenshot_path)
+screenshot_path = figures_dir / "extended_pressure_field.png"
+plotter.screenshot(str(screenshot_path))
 print(f"[SUCCESS] Resonance pressure field saved to: {screenshot_path}")
 print("\nAll tasks in Exercise 4 completed successfully!")

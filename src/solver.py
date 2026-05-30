@@ -131,16 +131,21 @@ class HelmholtzSolver:
 
 if __name__ == "__main__":
     # Standard script execution
+    from pathlib import Path
+
     from dolfinx.io import gmsh as dolfinx_gmsh
     from mpi4py import MPI
 
     import gmsh
     
+    project_root = Path(__file__).parent.parent
+
     if gmsh.isInitialized():
         gmsh.finalize()
         
     gmsh.initialize()
-    gmsh.open("Projects/helmholtz-muffler-fem/gmsh/mesh/simple_duct.msh")
+    mesh_path = project_root / "gmsh" / "mesh" / "simple_duct.msh"
+    gmsh.open(str(mesh_path))
     domain, _, facet_tags, _, _, _ = dolfinx_gmsh.model_to_mesh(
         gmsh.model, MPI.COMM_WORLD, rank=0, gdim=2
     )
@@ -174,6 +179,6 @@ if __name__ == "__main__":
     print(f"  TL analytical= {TL_anal[0]:.4f} dB")
     print(f"  Error        = {abs(TL_fem[0] - TL_anal[0]):.4f} dB")
     
-    os_img = "Projects/helmholtz-muffler-fem/results/pressure_field.png"
+    os_img = project_root / "results" / "pressure_field.png"
     solver.save_visualization(freqs[0], os_img)
     print(f"Pressure field visualization saved to: {os_img}")

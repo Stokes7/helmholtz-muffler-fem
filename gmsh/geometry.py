@@ -121,8 +121,16 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
 
 # %% ── 6. Run ─────────────────────────────────────────────
 if __name__ == "__main__":
+    from pathlib import Path
+
+    project_root = Path(__file__).parent.parent
+
+    # Ensure output directories exist
+    mesh_dir = project_root / "gmsh" / "mesh"                      
+    mesh_dir.mkdir(parents=True, exist_ok=True)
+
     h     = 0.005   # mesh size
-    output_path = "Projects/helmholtz-muffler-fem/gmsh/mesh/simple_duct.msh"
+    output_path = mesh_dir / "simple_duct.msh"
     print(f"Generating mesh with h = {h} m...")
     generate_muffler_mesh(h, output_file=output_path, recombine_quads=True)
     print(f"Mesh saved successfully to: {output_path}")

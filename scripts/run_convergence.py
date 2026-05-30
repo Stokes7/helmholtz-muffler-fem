@@ -13,15 +13,18 @@ from dolfinx import fem
 from mpi4py import MPI
 
 # Import our modular geometry and solver components!
-project_root = "/home/zp252136/lectures/modern_simulation_software_development/Projects/helmholtz-muffler-fem"
-sys.path.append(os.path.join(project_root, "gmsh"))
-sys.path.append(os.path.join(project_root, "src"))
+from pathlib import Path
+project_root = Path(__file__).resolve().parent.parent
+
+sys.path.append(str(project_root / "gmsh"))
+sys.path.append(str(project_root / "src"))
 from geometry import generate_muffler_mesh
 
 from solver import HelmholtzSolver
 
 # Ensure results folder exists
-os.makedirs(os.path.join(project_root, "results/figures"), exist_ok=True)
+figures_dir = project_root / "results" / "figures"
+figures_dir.mkdir(parents=True, exist_ok=True)
 
 # %% ── 2. Run Reference Solution (Ultra-Fine Mesh) ────────────────────────
 f_test = 500.0
@@ -123,6 +126,6 @@ ax.grid(True, which="both", linestyle=":", alpha=0.6)
 ax.legend(loc="lower right", frameon=True, fontsize=10)
 
 plt.tight_layout()
-fig_output = os.path.join(project_root, "results/figures/mesh_convergence.png")
-plt.savefig(fig_output, dpi=150)
+fig_output = figures_dir / "mesh_convergence.png"
+plt.savefig(str(fig_output), dpi=150)
 print(f"\nConvergence log-log plot successfully saved to: {fig_output}")

@@ -144,8 +144,16 @@ def generate_extended_mesh(h_size, L_ext_in, L_ext_out, output_file=None, recomb
 
 # %% ── 6. Run ─────────────────────────────────────────────
 if __name__ == "__main__":
+    from pathlib import Path
+
+    project_root = Path(__file__).parent.parent
+
+    # Ensure output directories exist
+    mesh_dir = project_root / "gmsh" / "mesh"                      
+    mesh_dir.mkdir(parents=True, exist_ok=True)
+
     h     = 0.002   # mesh size
-    output_path = "Projects/helmholtz-muffler-fem/gmsh/mesh/extended_duct.msh"
+    output_path = mesh_dir / "extended_duct.msh"
     print(f"Generating mesh with h = {h} m...")
     generate_extended_mesh(h, L_ext_in=0.05, L_ext_out=0.05, output_file=output_path, recombine_quads=True)  
     print(f"Mesh saved successfully to: {output_path}")

@@ -5,12 +5,15 @@ import numpy as np
 
 import gmsh
 
-output_path = "Projects/helmholtz-muffler-fem/gmsh/mesh/simple_duct.msh"
-# output_path = "Projects/helmholtz-muffler-fem/gmsh/mesh/extended_duct.msh"
+from pathlib import Path
+
+project_root = Path(__file__).resolve().parent.parent
+output_path = project_root / "gmsh" / "mesh" / "simple_duct.msh"
+# output_path = project_root / "gmsh" / "mesh" / "extended_duct.msh"
 
 
 gmsh.initialize()
-gmsh.open(output_path)
+gmsh.open(str(output_path))
 
 # %% ── Plot the mesh ──────────────────────────────────────────────────
 from matplotlib.collections import PolyCollection

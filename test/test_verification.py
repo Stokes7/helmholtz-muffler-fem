@@ -10,21 +10,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Import our modular geometry and solver components!
-project_root = "/home/zp252136/lectures/modern_simulation_software_development/Projects/helmholtz-muffler-fem"
-sys.path.append(os.path.join(project_root, "gmsh"))
-sys.path.append(os.path.join(project_root, "src"))
+from pathlib import Path
+project_root = Path(__file__).resolve().parent.parent
+
+sys.path.append(str(project_root / "gmsh"))
+sys.path.append(str(project_root / "src"))
 from geometry import generate_muffler_mesh
 
 from solver import HelmholtzSolver
 
 # Ensure output directories exist
-os.makedirs(os.path.join(project_root, "results/figures"), exist_ok=True)
+figures_dir = project_root / "results" / "figures"
+figures_dir.mkdir(parents=True, exist_ok=True)
 
 # %% ── 2. Generate Mesh programmatically ──────────────────────────────────
 h_default = 0.005
-mesh_path = os.path.join(project_root, "gmsh/mesh/simple_duct.msh")
+mesh_path = project_root / "gmsh" / "mesh" / "simple_duct.msh"
 print(f"Generating mesh with h = {h_default} m...")
-domain, cell_tags, facet_tags = generate_muffler_mesh(h_default, output_file=mesh_path)
+domain, cell_tags, facet_tags = generate_muffler_mesh(h_default, output_file=str(mesh_path))
 
 # %% ── 3. Initialize Solver ───────────────────────────────────────────────
 print("Initializing Helmholtz solver...")
@@ -63,7 +66,7 @@ ax.grid(True, which="both", linestyle=":", alpha=0.6)
 ax.legend(loc="upper right", frameon=True, fontsize=10)
 
 plt.tight_layout()
-fig_output = os.path.join(project_root, "results/figures/validation_tl_sweep.png")
-plt.savefig(fig_output, dpi=150)
+fig_output = figures_dir / "validation_tl_sweep.png"
+plt.savefig(str(fig_output), dpi=150)
 print(f"\nSweep validation plot successfully saved to: {fig_output}")
 # %%

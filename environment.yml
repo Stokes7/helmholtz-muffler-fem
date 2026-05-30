@@ -1,0 +1,16 @@
+name: fenicsx-complex
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - fenics-dolfinx>=0.7
+  - petsc=*=*complex*
+  - slepc=*=*complex*
+  - python-gmsh
+  - pyvista
+  - matplotlib
+  - numpy
+  - mpi4py
+  - pip
+  - pip:
+      - pytest
