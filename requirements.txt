@@ -1,5 +1,5 @@
 numpy
 matplotlib
 pyvista
-python-gmsh
+gmsh
 pytest
