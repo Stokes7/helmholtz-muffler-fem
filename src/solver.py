@@ -1,4 +1,4 @@
-# %% ── 1. Import Libraries ──────────────────────────────────
+# %% ── 1. Import Libraries ──────────────────────────────────────────────
 import numpy as np
 import ufl
 from dolfinx import fem

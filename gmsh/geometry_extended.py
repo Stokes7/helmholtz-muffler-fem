@@ -7,12 +7,13 @@ L_ch   = 0.20   # chamber length     [m]
 L_out = 0.10   # outlet pipe length [m]
 r     = 0.025  # pipe half-height   [m]
 R     = 0.05   # chamber half-height [m]
+t_w   = 0.002  # wall thickness     [m]
  
 from dolfinx.io import gmsh as dolfinx_gmsh
 from mpi4py import MPI
 
 
-def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
+def generate_extended_mesh(h_size, L_ext_in, L_ext_out, output_file=None, recombine_quads=True):
     """
     Programmatically generates the geometry and mesh for a simple expansion chamber.
     Returns (domain, cell_tags, facet_tags) directly.
@@ -37,20 +38,42 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
         removeTool=True,
     )
 
+    basic_domain = out[0][1]
+
+    # Create solid walls of extended tubes only if they have non-zero length
+    walls_to_cut = []
+    if L_ext_in > 1e-9:
+        wall_in_up = gmsh.model.occ.addRectangle(L_in, r, 0.0, L_ext_in, t_w)
+        wall_in_down = gmsh.model.occ.addRectangle(L_in, -r - t_w, 0.0, L_ext_in, t_w)
+        walls_to_cut.extend([(2, wall_in_up), (2, wall_in_down)])
+
+    if L_ext_out > 1e-9:
+        x_out_start = L_in + L_ch - L_ext_out
+        wall_out_up = gmsh.model.occ.addRectangle(x_out_start, r, 0.0, L_ext_out, t_w)
+        wall_out_down = gmsh.model.occ.addRectangle(x_out_start, -r - t_w, 0.0, L_ext_out, t_w)
+        walls_to_cut.extend([(2, wall_out_up), (2, wall_out_down)])
+
+    # Subtract the walls if any exist, otherwise keep basic domain
+    if walls_to_cut:
+        fluid, _ = gmsh.model.occ.cut(
+            [(2, basic_domain)],
+            walls_to_cut,
+            removeObject=True,
+            removeTool=True,
+        )
+        domain_tag = fluid[0][1]
+    else:
+        domain_tag = basic_domain
+
     # Synchronize the geometry with the mesh
     gmsh.model.occ.synchronize()
 
-    domain_tag = out[0][1]
     # print(f"Domain tag after fuse: {domain_tag}")
 
     # ── 3. Find and classify the boundary edges ───────────────────────────
 
-    # getBoundary returns a list of (dim, tag) pairs for all entities on
-    # the boundary of our surface.  dim=1 means a curve (edge).
-
     curves = gmsh.model.getBoundary([(2, domain_tag)], oriented=False)
     # print(f"Found {len(curves)} boundary curves: {curves}")
-    # For a rectangle you should see exactly 4 curves.
      
     inlet_tags  = []
     outlet_tags = []
@@ -59,7 +82,7 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
     x_total = L_in + L_ch + L_out
      
     for dim, tag in curves:
-        # getCenterOfMass returns (x, y, z) of the midpoint of the curve.
+    #    # getCenterOfMass returns (x, y, z) of the midpoint of the curve.
         xc, yc, _ = gmsh.model.occ.getCenterOfMass(dim, tag)
         # print(f"  curve tag={tag:3d}  centre=({xc:.4f}, {yc:.4f})")
      
@@ -121,9 +144,9 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
 
 # %% ── 6. Run ─────────────────────────────────────────────
 if __name__ == "__main__":
-    h     = 0.005   # mesh size
-    output_path = "Projects/helmholtz-muffler-fem/gmsh/mesh/simple_duct.msh"
+    h     = 0.002   # mesh size
+    output_path = "Projects/helmholtz-muffler-fem/gmsh/mesh/extended_duct.msh"
     print(f"Generating mesh with h = {h} m...")
-    generate_muffler_mesh(h, output_file=output_path, recombine_quads=True)
+    generate_extended_mesh(h, L_ext_in=0.05, L_ext_out=0.05, output_file=output_path, recombine_quads=True)  
     print(f"Mesh saved successfully to: {output_path}")
     # %%

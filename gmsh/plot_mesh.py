@@ -6,6 +6,8 @@ import numpy as np
 import gmsh
 
 output_path = "Projects/helmholtz-muffler-fem/gmsh/mesh/simple_duct.msh"
+# output_path = "Projects/helmholtz-muffler-fem/gmsh/mesh/extended_duct.msh"
+
 
 gmsh.initialize()
 gmsh.open(output_path)
