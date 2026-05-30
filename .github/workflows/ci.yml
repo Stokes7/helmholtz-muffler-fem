@@ -11,7 +11,7 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     container:
-      image: dolfinx/dolfinx:latest
+      image: dolfinx/dolfinx:stable
 
     steps:
       - uses: actions/checkout@v4
