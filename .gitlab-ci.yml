@@ -1,0 +1,56 @@
+stages:
+  - test
+  - deploy
+
+# 1. Automated Testing Stage using the official FEniCSx Docker Image
+unit-testing:
+  stage: test
+  image: dolfinx/dolfinx:latest
+  before_script:
+    # Set gcc compiler to bypass any JIT linking issues in Docker
+    export CC=gcc
+    pip install -r requirements.txt
+  script:
+    - pytest test/
+
+# 2. GitLab Pages deployment stage to host your project documentation
+pages:
+  stage: deploy
+  image: python:3.10-slim
+  before_script:
+    - pip install markdown
+  script:
+    # Ensure build output folder exists
+    - mkdir -p public
+    # Compile walkthrough.md and README.md into a single responsive HTML documentation page
+    - |
+      python3 -c "
+      import markdown
+      with open('README.md', 'r') as r:
+          readme_html = markdown.markdown(r.read())
+      with open('public/index.html', 'w') as w:
+          w.write(f'''
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Helmholtz Muffler FEM Documentation</title>
+              <meta name='viewport' content='width=device-width, initial-scale=1'>
+              <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/picocss@1.5.7/css/pico.min.css'>
+              <style>
+                  body {{ padding: 2rem; }}
+                  pre {{ background: #f4f4f4; padding: 1rem; border-radius: 5px; }}
+              </style>
+          </head>
+          <body>
+              <main class='container'>
+                  {readme_html}
+              </main>
+          </body>
+          </html>
+          ''')
+      "
+  artifacts:
+    paths:
+      - public
+  only:
+    - main

@@ -49,10 +49,11 @@ The project is structured modularly to separate geometry modeling, physical solv
 * 📂 **`src/`**: Core FEM solver.
   * `solver.py`: Contains the `HelmholtzSolver` class. It manages the Lagrange P1 function space, builds the complex weak formulation, applies anechoic Robin boundary conditions at the outlet, and computes the Transmission Loss (TL).
 * 📂 **`scripts/`**: Parametric sweeps, convergence, and optimization.
+  * `run_verfication_case.py`: A comprehensive frequency sweep (10 - 2000 Hz) validating the 2D FEM solution against 1D plane-wave analytical theory.
   * `run_convergence.py`: A formal mesh convergence study checking $L^2$ and $H^1$ error norms against an ultra-fine reference solution to verify theoretical convergence rates.
   * `run_scenario_study.py`: Runs 1D frequency sweeps for multiple designs, performs a 2D parametric length optimization sweep, and saves 2D pyvista pressure field renders at resonance.
-* 📂 **`test/`**: Analytical verifications.
-  * `test_verification.py`: A comprehensive frequency sweep (10 - 2000 Hz) validating the 2D FEM solution against 1D plane-wave analytical theory.
+* 📂 **`test/`**: Automated unit tests.
+  * `test_solver.py`: Automated pytest suite testing physical solver bounds, geometry creation, and collision detection.
 * 📂 **`results/`**: Figures and renders are automatically saved here.
 
 ---
@@ -87,7 +88,7 @@ If you prefer running individual components manually:
    ```
 3. **Run the physical validation sweep against analytical theory**:
    ```bash
-   python test/test_verification.py
+   python scripts/run_verfication_case.py
    ```
 4. **Run the mesh convergence study**:
    ```bash

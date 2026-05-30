@@ -14,10 +14,13 @@ from mpi4py import MPI
 
 
 def generate_extended_mesh(h_size, L_ext_in, L_ext_out, output_file=None, recombine_quads=True):
-    """
-    Programmatically generates the geometry and mesh for a simple expansion chamber.
-    Returns (domain, cell_tags, facet_tags) directly.
-    """
+    # Basic physical constraint to prevent internal collisions
+    if L_ext_in + L_ext_out >= L_ch:
+        raise ValueError(
+            f"Geometric error: L_ext_in ({L_ext_in}m) + L_ext_out ({L_ext_out}m) "
+            f"cannot exceed or equal the chamber length ({L_ch}m)."
+        )
+
     if gmsh.isInitialized():
         gmsh.finalize()
         

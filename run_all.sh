@@ -25,9 +25,13 @@ fi
 
 echo "Using Python interpreter: $PYTHON_EXEC"
 
+# 0. Run automated unit tests using pytest
+echo -e "\n--> Running Automated Unit Tests (pytest)..."
+"$PYTHON_EXEC" -m pytest test/
+
 # 1. Run verification frequency sweep
 echo -e "\n--> Running Exercise 2 Verification Sweep..."
-"$PYTHON_EXEC" test/test_verification.py
+"$PYTHON_EXEC" scripts/run_verfication_case.py
 
 # 2. Run mesh convergence study
 echo -e "\n--> Running Exercise 3 Mesh Convergence Study..."
