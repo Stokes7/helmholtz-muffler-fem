@@ -53,6 +53,7 @@ jobs:
       - name: Build HTML site
         run: |
           mkdir -p public
+          cp -r results public/
           python3 -c "
           import markdown
 

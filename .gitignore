@@ -5,5 +5,4 @@ __pycache__/
 *.pyd
 .ipynb_checkpoints/
 .pytest_cache/
-results/
 *.log
