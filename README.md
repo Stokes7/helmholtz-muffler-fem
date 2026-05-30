@@ -10,7 +10,7 @@ Acoustic FEM simulations require advanced compiled scientific libraries (such as
 
 > [!IMPORTANT]
 > **Prerequisite:** You **must** have a Conda distribution installed on your system before running any commands. 
-> * We highly recommend installing **[Miniforge](https://github.com/conda-forge/miniforge)** (which comes with `mamba` pre-installed and uses the free, community-driven `conda-forge` channel).
+> * It is highly recommend to install **[Miniforge](https://github.com/conda-forge/miniforge)** (which comes with `mamba` pre-installed and uses the free, community-driven `conda-forge` channel).
 > * Alternatively, you can use **[Miniconda](https://docs.conda.io/en/latest/miniconda.html)**.
 
 Choose one of the two options below to configure your environment:
@@ -25,7 +25,7 @@ This is the most robust, cross-platform method. It automatically installs all co
    ```
 2. Create the virtual environment from the provided `environment.yml` file:
    ```bash
-   # If using Miniforge (highly recommended - ultra fast):
+   # If using Miniforge (highly recommended - faster implementation):
    mamba env create -f environment.yml
    
    # If using standard Miniconda/Anaconda:
