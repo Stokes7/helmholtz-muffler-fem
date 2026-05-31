@@ -34,6 +34,13 @@ def main():
     else:
         print("[WARNING] 'results/' directory not found. Figures will not render locally.")
 
+    # 3b. Copy report/assets/ into public/assets/ if it exists
+    if os.path.exists('report/assets'):
+        if os.path.exists('public/assets'):
+            shutil.rmtree('public/assets')
+        shutil.copytree('report/assets', 'public/assets')
+        print("[1b/3] Successfully copied 'report/assets/' to 'public/assets/'")
+
     # 4. Read and compile README.md
     readme_path = 'README.md'
     if os.path.exists(readme_path):

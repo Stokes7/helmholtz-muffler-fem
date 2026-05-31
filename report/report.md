@@ -12,6 +12,7 @@
 ---
 
 ## 1. Introduction and Physical Setup
+![Descripción](../results/figures/validation_tl_sweep.png)
 
 ---
 
