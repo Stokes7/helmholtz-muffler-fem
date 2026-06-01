@@ -119,6 +119,7 @@ def main():
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
     <style>
         body {{ padding: 2rem; font-family: system-ui, -apple-system, sans-serif; }}
+        p, li {{ text-align: justify; hyphens: auto; }}
         pre {{ background: #1e1e1e; padding: 1.2rem; border-radius: 6px; overflow-x: auto; border: 1px solid #333; }}
         code {{ color: #ff79c6; background: #282a36; padding: 0.2rem 0.4rem; border-radius: 4px; }}
         .header-container {{ border-bottom: 1px solid #444; padding-bottom: 1.5rem; margin-bottom: 2rem; }}
