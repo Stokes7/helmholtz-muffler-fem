@@ -3,3 +3,5 @@ matplotlib
 pyvista
 gmsh
 pytest
+pymdown-extensions
+
