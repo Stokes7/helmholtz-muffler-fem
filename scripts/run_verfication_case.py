@@ -76,19 +76,43 @@ print(f"\nSweep validation plot successfully saved to: {fig_output}")
 import pyvista as pv
 from dolfinx import plot
 
-solver.solve(500.0)
+solver.solve(1000.0)
 
 topology, cell_types, geometry = plot.vtk_mesh(solver.V)
 grid = pv.UnstructuredGrid(topology, cell_types, geometry)
-grid.point_data["|p|"] = np.abs(solver.p_h.x.array)
+p_arr = solver.p_h.x.array
+grid.point_data["Re(p)"] = p_arr.real
+grid.point_data["|p|"]   = np.abs(p_arr)
 
-plotter = pv.Plotter(window_size=(500, 400), off_screen=True)
-plotter.add_mesh(grid.copy(), scalars="|p|", cmap="viridis", show_edges=False)
-plotter.add_text("|p| at 500 Hz", font_size=10)
+pv.set_plot_theme("document")
+
+scalar_bar_args = dict(
+    title_font_size=14, label_font_size=11,
+    shadow=True, n_labels=5,
+    fmt="%.2f", vertical=False,
+    position_x=0.2, position_y=0.02, width=0.6, height=0.08,
+)
+
+plotter = pv.Plotter(window_size=(800, 300), off_screen=True)
+plotter.set_background("white")
+plotter.add_mesh(grid.copy(), scalars="|p|", cmap="plasma",
+                 show_edges=False, scalar_bar_args={**scalar_bar_args, "title": "|p| [Pa]"})
+plotter.add_mesh(grid.copy(), style="wireframe", color="white",
+                   line_width=0.2, opacity=0.1)
+ # plotter.add_text("|p|  |  1000 Hz", font_size=10, position="upper_edge")
 plotter.view_xy()
+plotter.camera.zoom(2.7)
 
 pressure_output = figures_dir / "pressure_field_500Hz.png"
 plotter.screenshot(str(pressure_output))
-print(f"Pressure field saved to: {pressure_output}")
+
+import matplotlib.image as mpimg
+
+img = mpimg.imread(str(pressure_output))
+fig, ax = plt.subplots(figsize=(12, 2.2))
+ax.imshow(img)
+ax.axis("off")
+plt.tight_layout()
+plt.show()
 
 # %%
