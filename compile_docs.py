@@ -125,8 +125,9 @@ def main():
         .header-container {{ border-bottom: 1px solid #444; padding-bottom: 1.5rem; margin-bottom: 2rem; }}
         .math-display {{ overflow-x: auto; margin: 1.5rem 0; text-align: center; }}
         figure {{ text-align: center; }}
+        figure p {{ text-align: center !important; }}
         figcaption {{ text-align: center; font-style: italic; font-size: 0.9rem; margin-top: 0.5rem; }}
-        img {{ display: block; border-radius: 8px; border: 1px solid #444; margin: 1.5rem auto; max-width: 100%; height: auto; }}
+        img {{ border-radius: 8px; border: 1px solid #444; margin: 1.5rem auto !important; display: block; max-width: 100%; height: auto; }}
         table {{ width: 100%; border-collapse: collapse; margin: 1.5rem 0; }}
         th, td {{ border: 1px solid #444; padding: 0.8rem; text-align: left; }}
         th {{ background-color: #222; color: #fff; }}
