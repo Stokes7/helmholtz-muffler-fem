@@ -20,7 +20,7 @@ This is the most robust, cross-platform method. It automatically installs all co
 
 1. Open your terminal, clone this repository, and navigate to its root:
    ```bash
-   git clone <REPOSITORY_URL>
+   git clone https://github.com/Stokes7/helmholtz-muffler-fem
    cd helmholtz-muffler-fem
    ```
 2. Create the virtual environment from the provided `environment.yml` file:
@@ -42,19 +42,19 @@ This is the most robust, cross-platform method. It automatically installs all co
 
 The project is structured modularly to separate geometry modeling, physical solving, and scientific analysis:
 
-* 📂 **`gmsh/`**: Geometry and mesh generation.
+* **`gmsh/`**: Geometry and mesh generation.
   * `geometry.py`: Generates the mesh for a simple expansion chamber.
   * `geometry_extended.py`: Generates the mesh for a muffler with internal inlet/outlet protrusions (extended pipes) using boolean operations.
   * `plot_mesh.py`: Interactive 2D mesh visualizer using Matplotlib.
-* 📂 **`src/`**: Core FEM solver.
+* **`src/`**: Core FEM solver.
   * `solver.py`: Contains the `HelmholtzSolver` class. It manages the Lagrange P1 function space, builds the complex weak formulation, applies anechoic Robin boundary conditions at the outlet, and computes the Transmission Loss (TL).
-* 📂 **`scripts/`**: Parametric sweeps, convergence, and optimization.
+* **`scripts/`**: Parametric sweeps, convergence, and optimization.
   * `run_verfication_case.py`: A comprehensive frequency sweep (10 - 2000 Hz) validating the 2D FEM solution against 1D plane-wave analytical theory.
   * `run_convergence.py`: A formal mesh convergence study checking $L^2$ and $H^1$ error norms against an ultra-fine reference solution to verify theoretical convergence rates.
   * `run_scenario_study.py`: Runs 1D frequency sweeps for multiple designs, performs a 2D parametric length optimization sweep, and saves 2D pyvista pressure field renders at resonance.
-* 📂 **`test/`**: Automated unit tests.
+* **`test/`**: Automated unit tests.
   * `test_solver.py`: Automated pytest suite testing physical solver bounds, geometry creation, and collision detection.
-* 📂 **`results/`**: Figures and renders are automatically saved here.
+* **`results/`**: Figures and renders are automatically saved here.
 
 ---
 
