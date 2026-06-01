@@ -128,6 +128,9 @@ def main():
         th, td {{ border: 1px solid #444; padding: 0.8rem; text-align: left; }}
         th {{ background-color: #222; color: #fff; }}
         blockquote {{ border-left: 4px solid #ff79c6; background: #202020; margin: 1rem 0; padding: 0.8rem; border-radius: 0 4px 4px 0; color: #aaa; }}
+        @media print {{
+            img, figure:has(img) {{ display: none !important; }}
+        }}
     </style>
 </head>
 <body class="container">
