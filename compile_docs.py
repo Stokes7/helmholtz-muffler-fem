@@ -66,7 +66,7 @@ def main():
 
     # 6. Write final compiled index.html with dark theme and MathJax LaTeX parser
     html_content = f'''<!DOCTYPE html>
-<html data-theme="dark">
+<html data-theme="light">
 <head>
     <title>Helmholtz Muffler FEM Documentation & Report</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
