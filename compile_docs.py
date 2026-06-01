@@ -48,8 +48,8 @@ def _compile_markdown_with_math(md_text):
 
     md_text = re.sub(r'\$([^\$\n]+?)\$', _protect_inline, md_text)
 
-    # 3. Run standard Markdown (no arithmatex needed)
-    html = markdown.markdown(md_text, extensions=['tables', 'fenced_code'])
+    # 3. Run standard Markdown with md_in_html extension to parse inside HTML blocks
+    html = markdown.markdown(md_text, extensions=['tables', 'fenced_code', 'md_in_html'])
 
     # 4. Restore math wrapped for MathJax \(...\) / \[...\]
     for k, (kind, content) in store.items():
@@ -97,6 +97,8 @@ def main():
         report_raw = f.read()
 
     report_raw = report_raw.replace('../results/figures/', 'results/figures/')
+    # Enable markdown parsing inside <figure> tags
+    report_raw = report_raw.replace('<figure style="text-align: center;">', '<figure style="text-align: center;" markdown="1">')
     report_html = _compile_markdown_with_math(report_raw)
     print("[2/2] Compiled report/report.md successfully.")
 
@@ -124,7 +126,7 @@ def main():
         img {{ border-radius: 8px; border: 1px solid #444; margin: 1.5rem 0; max-width: 100%; height: auto; }}
         table {{ width: 100%; border-collapse: collapse; margin: 1.5rem 0; }}
         th, td {{ border: 1px solid #444; padding: 0.8rem; text-align: left; }}
-        th {{ background-color: #222; }}
+        th {{ background-color: #222; color: #fff; }}
         blockquote {{ border-left: 4px solid #ff79c6; background: #202020; margin: 1rem 0; padding: 0.8rem; border-radius: 0 4px 4px 0; color: #aaa; }}
     </style>
 </head>
