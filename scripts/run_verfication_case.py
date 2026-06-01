@@ -61,7 +61,7 @@ ax.plot(freqs, TL_fem,  "r-",  linewidth=1.5, label="FEM 2D (Lagrange P1 element
 
 ax.set_xlabel("Frequency [Hz]", fontsize=11)
 ax.set_ylabel("Transmission Loss (TL) [dB]", fontsize=11)
-ax.set_title("Transmission Loss Spectrum — Simple Expansion Muffler", fontsize=13, fontweight="bold")
+# ax.set_title("Transmission Loss Spectrum — Simple Expansion Muffler", fontsize=13, fontweight="bold")
 ax.set_xlim(freqs[0], freqs[-1])
 ax.set_ylim(-2, 5)
 ax.grid(True, which="both", linestyle=":", alpha=0.6)
@@ -71,6 +71,8 @@ plt.tight_layout()
 fig_output = figures_dir / "validation_tl_sweep.png"
 plt.savefig(str(fig_output), dpi=150)
 print(f"\nSweep validation plot successfully saved to: {fig_output}")
+
+plt.show()
 
 # %% ─── 6. Plot pressure field at 500 Hz ────────────────────────────────────────────────────────
 import pyvista as pv

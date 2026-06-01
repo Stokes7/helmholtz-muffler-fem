@@ -1,15 +1,15 @@
 # %% ── 1. Import Libraries ──────────────────────────────────
-import os
 import sys
 
 import matplotlib
 
 matplotlib.use("Agg")  # Run headless without GUI windows
+# Append paths to search local modules
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Append paths to search local modules
-from pathlib import Path
 try:
     project_root = Path(__file__).resolve().parent.parent
 except NameError:
@@ -26,7 +26,7 @@ from solver import HelmholtzSolver
 figures_dir = project_root / "results" / "figures"
 figures_dir.mkdir(parents=True, exist_ok=True)
 
-h_size = 0.005  # Standard mesh size for fast, highly resolved sweep
+h_size = 0.005  # Mesh size for highly resolved sweep
 f_opt = 1200.0  # Targeted optimization frequency (Hz)
 
 # %% ── 2. Run Comparative Frequency Sweeps (1D) ────────────
@@ -69,22 +69,38 @@ for name, params in cases.items():
     ax.plot(freqs, tl_results[name], color=params["color"], linestyle=params["style"], 
             linewidth=1.5, label=name)
 
-# Theoretical quarter-wave resonance at 1715 Hz for a 0.05m protrusion
-ax.axvline(1319, color="black", linestyle=":", alpha=0.6, 
-           label="Theoretical Quarter-Wave Peak (1715 Hz)")
+# c0 = 343.0
+# r_pipe    = 0.025   # pipe half-height [m]
+# r_chamber = 0.05    # chamber half-height [m]
+# L_ext = cases["Symmetric Ext Both"]["L_in"]
+#
+# # Geometric quarter-wave resonance (no end correction)
+# f_qw = c0 / (4 * L_ext)
+#
+# # End-length correction (Ingard, flanged tube inside concentric chamber)
+# delta = 0.6 * r_pipe * (1 - 1.25 * r_pipe / r_chamber)
+# f_qw_corr = c0 / (4 * (L_ext + delta))
+#
+# ax.axvline(f_qw_corr, color="black", linestyle=":",  alpha=0.8,
+#            label=f"QW corrected  $c_0/(4(L+\\delta))$ = {f_qw_corr:.0f} Hz  ($\\delta$={delta*1000:.1f} mm)")
 
 ax.set_xlabel("Frequency [Hz]", fontsize=11)
 ax.set_ylabel("Transmission Loss (TL) [dB]", fontsize=11)
-ax.set_title("Transmission Loss Spectrum — Parametric Design Comparison", fontsize=13, fontweight="bold")
+# ax.set_title("Transmission Loss Spectrum — Parametric Design Comparison", fontsize=13, fontweight="bold")
 ax.set_xlim(freqs[0], freqs[-1])
 ax.set_ylim(-2, 70)
 ax.grid(True, which="both", linestyle=":", alpha=0.6)
-ax.legend(loc="upper right", frameon=True, fontsize=10)
+ax.legend(loc="upper left", frameon=True, fontsize=10)
 
 fig_output = figures_dir / "extended_tl_comparison.png"
 plt.tight_layout()
 plt.savefig(str(fig_output), dpi=150)
 print(f"\n[SUCCESS] Spectrum comparison plot saved to: {fig_output}")
+
+# Peak TL frequency of the symmetric extended case
+sym_tl = tl_results["Symmetric Ext Both"]
+f_peak = freqs[np.argmax(sym_tl)]
+print(f"Peak TL of symmetric case: {sym_tl.max():.3f} dB at {f_peak:.0f} Hz")
 
 
 # %% ── 3. Run 2D Protrusion Length Optimization Sweep ──────────
@@ -126,7 +142,7 @@ ax2.plot(opt_in, opt_out, "ro", markersize=8, label=f"Optimal Design ({opt_in:.3
 
 ax2.set_xlabel("Inlet Protrusion Length $L_{ext\\_in}$ [m]", fontsize=11)
 ax2.set_ylabel("Outlet Protrusion Length $L_{ext\\_out}$ [m]", fontsize=11)
-ax2.set_title(f"Acoustic Optimization Heatmap at {f_opt:.0f} Hz", fontsize=13, fontweight="bold")
+# ax2.set_title(f"Acoustic Optimization Heatmap at {f_opt:.0f} Hz", fontsize=13, fontweight="bold")
 ax2.grid(True, linestyle=":", alpha=0.5)
 ax2.legend(loc="upper right", frameon=True)
 
@@ -142,45 +158,51 @@ print("\n=================================================================")
 print("STAGE 3: Rendering pressure field at resonance...")
 print("=================================================================")
 
+import matplotlib.image as mpimg
 import pyvista as pv
+from dolfinx import plot
 
-# Setup symmetric extended mesh at 1715 Hz
-print("Solving symmetric extended case at 1715 Hz for pressure visualization...")
+# Setup symmetric extended mesh at peak TL frequency
+print(f"Solving symmetric extended case at {f_peak:.0f} Hz (peak TL) for pressure visualization...")
 domain_vis, _, facet_tags_vis = generate_extended_mesh(h_size, 0.05, 0.05)
 solver_vis = HelmholtzSolver(domain_vis, facet_tags_vis)
-solver_vis.solve(1715.0)
-
-# Extract mesh for PyVista
-from dolfinx import plot
+solver_vis.solve(f_peak)
 
 topology, cell_types, geometry = plot.vtk_mesh(solver_vis.V)
 grid = pv.UnstructuredGrid(topology, cell_types, geometry)
-
-# Add complex pressure values as real/imag/mag scalars
 p_arr = solver_vis.p_h.x.array
-grid.point_data["Re(p)"] = p_arr.real
-grid.point_data["|p|"]   = np.abs(p_arr)
-grid.point_data["Im(p)"] = p_arr.imag
+grid.point_data["|p|"] = np.abs(p_arr)
 
-# Setup Plotter
-plotter = pv.Plotter(shape=(1, 3), window_size=(1800, 400), off_screen=True)
+pv.set_plot_theme("document")
 
-plotter.subplot(0, 0)
-plotter.add_mesh(grid.copy(), scalars="Re(p)", cmap="RdBu_r", show_edges=False)
-plotter.add_text("Re(p) at 1715 Hz", font_size=10)
+scalar_bar_args = dict(
+    title_font_size=14, label_font_size=11,
+    shadow=True, n_labels=5,
+    fmt="%.2f", vertical=False,
+    position_x=0.2, position_y=0.02, width=0.6, height=0.08,
+)
+
+plotter = pv.Plotter(window_size=(800, 300), off_screen=True)
+plotter.set_background("white")
+plotter.add_mesh(grid.copy(), scalars="|p|", cmap="plasma",
+                 show_edges=False, scalar_bar_args={**scalar_bar_args, "title": "|p| [Pa]"})
+plotter.add_mesh(grid.copy(), style="wireframe", color="white", line_width=0.2, opacity=0.1)
 plotter.view_xy()
-
-plotter.subplot(0, 1)
-plotter.add_mesh(grid.copy(), scalars="|p|", cmap="viridis", show_edges=False)
-plotter.add_text("|p| at 1715 Hz", font_size=10)
-plotter.view_xy()
-
-plotter.subplot(0, 2)
-plotter.add_mesh(grid.copy(), scalars="Im(p)", cmap="RdBu_r", show_edges=False)
-plotter.add_text("Im(p) at 1715 Hz", font_size=10)
-plotter.view_xy()
+plotter.camera.zoom(2.7)
 
 screenshot_path = figures_dir / "extended_pressure_field.png"
 plotter.screenshot(str(screenshot_path))
 print(f"[SUCCESS] Resonance pressure field saved to: {screenshot_path}")
+
+img = mpimg.imread(str(screenshot_path))
+fig, ax = plt.subplots(figsize=(12, 2.2))
+ax.imshow(img)
+ax.axis("off")
+plt.tight_layout()
+plt.show()
+
 print("\nAll tasks in Exercise 4 completed successfully!")
+
+
+
+# %%

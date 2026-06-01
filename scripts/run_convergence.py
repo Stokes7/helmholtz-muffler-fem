@@ -1,10 +1,12 @@
 # %% ── 1. Import Libraries ────────────────────────
-import os
 
 import matplotlib
 
 matplotlib.use("Agg")  # Run headless
 import sys
+
+# Import our modular geometry and solver components!
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,8 +14,6 @@ import ufl
 from dolfinx import fem
 from mpi4py import MPI
 
-# Import our modular geometry and solver components!
-from pathlib import Path
 try:
     project_root = Path(__file__).resolve().parent.parent
 except NameError:
@@ -84,9 +84,10 @@ for h in h_sizes:
     l2_err = np.sqrt(domain_h.comm.allreduce(fem.assemble_scalar(fem.form(ufl.inner(diff_p, diff_p) * dx_h)).real, op=MPI.SUM))
     L2_errors.append(l2_err)
     
-    # H1 norm Error
+    # H1 norm Error: ||e||_H1 = sqrt(||e||_L2^2 + ||∇e||_L2^2)
     diff_grad = ufl.grad(solver_h.p_h) - ufl.grad(p_ref_interpolated)
-    h1_err = np.sqrt(domain_h.comm.allreduce(fem.assemble_scalar(fem.form(ufl.inner(diff_grad, diff_grad) * dx_h)).real, op=MPI.SUM))
+    h1_semi = np.sqrt(domain_h.comm.allreduce(fem.assemble_scalar(fem.form(ufl.inner(diff_grad, diff_grad) * dx_h)).real, op=MPI.SUM))
+    h1_err = np.sqrt(l2_err**2 + h1_semi**2)
     H1_errors.append(h1_err)
     
     print(f"{h:<10.4f} | {dof_counts[-1]:<8d} | {TL_fem_h:<12.5f} | {tl_err:<10.4e} | {l2_err:<10.4e} | {h1_err:<10.4e}")
@@ -107,24 +108,32 @@ print(f"  TL Scalar Error Rate : {slope_TL:.3f}")
 
 
 # %% ── 5. Plot and Save log-log Error Graph ────────────────────────────────
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, ax = plt.subplots(figsize=(10, 6))
 
 # Plot measured errors
 ax.loglog(h_sizes, L2_errors, "bo-", linewidth=1.5, markersize=6, label=f"L2 Error (slope={slope_L2:.2f})")
 ax.loglog(h_sizes, H1_errors, "rs-", linewidth=1.5, markersize=6, label=f"H1 Error (slope={slope_H1:.2f})")
 # ax.loglog(h_sizes, TL_errors, "g^-", linewidth=1.5, markersize=6, label=f"TL Scalar Error (slope={slope_TL:.2f})")
 
-# Plot theoretical references
+# Theoretical rates for P1 with re-entrant corner (internal angle 3π/2, α=2/3):
+#   L2: O(h^(α+1)) = O(h^1.67)   H1: O(h^α) = O(h^0.67)
+# Smooth-domain P1 rates (O(h^2), O(h^1)) shown dashed for reference
 h_ref_lines = np.array(h_sizes)
-L2_theory = L2_errors[-1] * (h_ref_lines / h_ref_lines[-1])**2
-H1_theory = H1_errors[-1] * (h_ref_lines / h_ref_lines[-1])**1
+alpha = 2 / 3
 
-ax.loglog(h_sizes, L2_theory, "k--", alpha=0.5, label="Theoretical L2 Rate O(h^2)")
-ax.loglog(h_sizes, H1_theory, "k:",  alpha=0.5, label="Theoretical H1 Rate O(h^1)")
+L2_corner  = L2_errors[-1] * (h_ref_lines / h_ref_lines[-1])**(alpha + 1)
+H1_corner  = H1_errors[-1] * (h_ref_lines / h_ref_lines[-1])**alpha
+L2_smooth  = L2_errors[-1] * (h_ref_lines / h_ref_lines[-1])**2
+H1_smooth  = H1_errors[-1] * (h_ref_lines / h_ref_lines[-1])**1
+
+ax.loglog(h_sizes, L2_corner, "b--", alpha=0.5, label=f"L2 corner rate  O(h^{alpha+1:.2f})")
+ax.loglog(h_sizes, H1_corner, "r--", alpha=0.5, label=f"H1 corner rate  O(h^{alpha:.2f})")
+ax.loglog(h_sizes, L2_smooth, "k--", alpha=0.25, label="L2 smooth P1  O(h^2.00)")
+ax.loglog(h_sizes, H1_smooth, "k:",  alpha=0.25, label="H1 smooth P1  O(h^1.00)")
 
 ax.set_xlabel("Mesh Size h [m]", fontsize=11)
 ax.set_ylabel("Numerical Error", fontsize=11)
-ax.set_title("Mesh Convergence Study — Helmholtz Muffler FEM", fontsize=13, fontweight="bold")
+# ax.set_title("Mesh Convergence Study — Helmholtz Muffler FEM", fontsize=13, fontweight="bold")
 ax.grid(True, which="both", linestyle=":", alpha=0.6)
 ax.legend(loc="lower right", frameon=True, fontsize=10)
 
@@ -132,3 +141,6 @@ plt.tight_layout()
 fig_output = figures_dir / "mesh_convergence.png"
 plt.savefig(str(fig_output), dpi=150)
 print(f"\nConvergence log-log plot successfully saved to: {fig_output}")
+
+
+# %%
