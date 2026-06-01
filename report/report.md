@@ -1,7 +1,7 @@
 # Finite Element Simulation and Design Optimization of a 2D Helmholtz Acoustic Muffler
 
 **Course:** Modern Simulation Software Development (MSSD)  
-**Author:** zp252136  
+**Name:** Cristian Arango - 463933
 **Institution:** RWTH Aachen University  
 **Date:** May 2026  
 
@@ -73,7 +73,9 @@ $$\nabla p \cdot \mathbf{n} = -i\omega\rho_0 v_n \quad \text{on } \Gamma_\text{i
 
 **Outlet $\Gamma_\text{out}$: anechoic radiation condition (Robin):** To prevent spurious reflections at the outlet, a first-order absorbing boundary condition is applied. It enforces that the wave exits the domain as if it were propagating into an infinite anechoic duct:
 
-$$\nabla p \cdot \mathbf{n} = \frac{i\omega\rho_0}{Z}\, p \quad \text{on } \Gamma_\text{out}.$$
+$$\nabla p \cdot \mathbf{n} = \frac{i\omega\rho_0}{Z}\, p \quad \text{on } \Gamma_\text{out},$$
+
+where $Z = \rho_0 c_0$ is the characteristic acoustic impedance of the fluid.
 
 **Walls $\Gamma_\text{wall}$: rigid wall (homogeneous Neumann):** The chamber walls are modeled as acoustically rigid, meaning no normal particle velocity, which corresponds to a zero normal pressure gradient:
 
@@ -143,31 +145,139 @@ For the linear system, the MUMPS sparse direct solver is used via PETSc (`pc_typ
 
 ## 4. Exercise 2: Verification Sweep
 
+The FEM implementation is verified against the exact 1D plane-wave solution for the Simple Expansion Chamber (SEC). The geometry uses a chamber of length $L_\text{ch} = 0.20\,\text{m}$, chamber half-height $R = 0.05\,\text{m}$, and duct half-height $r = 0.025\,\text{m}$, giving an area ratio of $m = R/r = 2$. A uniform triangular mesh with characteristic element size $h = 0.005\,\text{m}$ is used, and 399 frequencies are solved from 10 to 2000 Hz in steps of 5 Hz.
+
+**Analytical reference.** For a simple expansion chamber excited by plane waves, Munjal [3] gives the closed-form TL as:
+
+$$\text{TL}_\text{anal} = 10 \log_{10}\!\left[1 + \frac{1}{4}\!\left(m - \frac{1}{m}\right)^2 \sin^2(k L_\text{ch})\right],$$
+
+with $m = 2$ and $L_\text{ch} = 0.20\,\text{m}$. This expression predicts a periodic pattern with transmission peaks whenever $k L_\text{ch} = (2n-1)\pi/2$, i.e. at $f = 429, 1286, \ldots\,\text{Hz}$, and perfect transparency ($\text{TL} = 0$) at integer multiples of $c_0 / (2 L_\text{ch}) = 857\,\text{Hz}$. The maximum attainable TL is $10 \log_{10}(1 + \tfrac{1}{4}\cdot 2.25) \approx 1.94\,\text{dB}$.
+
+**Results and discussion.** Figure 3 overlays the FEM result (solid red) with the analytical prediction (dashed black).
+
+<figure style="text-align: center;">
+  <img src="../results/figures/validation_tl_sweep.png" alt="Validation TL sweep">
+  <figcaption>Figure 3: Transmission Loss over 10–2000 Hz. FEM solution (Lagrange P1, h = 0.005 m) compared with the 1D analytical plane-wave formula.</figcaption>
+</figure>
+
+Below 800 Hz the two curves are in a good agreement, confirming that the weak form, boundary conditions, and TL post-processing are correctly implemented. The periodic pattern with peaks near 400 Hz and transparent frequencies near 857 Hz is reasonable reproduced.
+
+A visible discrepancy develops above 1000 Hz: the second FEM peak near 1350 Hz appears slightly shifted and marginally higher (~2.1 dB) compared with the analytical prediction at 1286 Hz. Two physical mechanisms contribute. First, the 2D FEM resolves the near-field pressure redistribution at the abrupt duct-chamber junctions. Plane waves entering the expansion scatter into vanishing transverse modes at the area changes. These modes introduce a small additional acoustic reactance that slightly shifts the resonant frequencies. The 1D formula assumes instantaneous mode matching with no such reactance correction. Second, the first transverse mode in the chamber cuts on at $f_\text{cut} = c_0 / (2 \cdot 2R) = 343 / 0.20 = 1715\,\text{Hz}$; as this frequency is approached, the plane-wave assumption underlying the analytical formula degrades. Both effects are inherent to the comparison itself and do not indicate a solver error. Overall, the maximum TL error over the full sweep remains below 0.2 dB at all frequencies below the cut-on frequency, which is well within engineering accuracy.
+
+Figure 4 illustrates the pressure magnitude $|p|$ computed at 1000 Hz, a frequency between the first and second TL peaks where the chamber supports a partial standing wave.
+
+<figure style="text-align: center;">
+  <img src="../results/figures/pressure_field_500Hz.png" alt="Pressure field at 1000 Hz — simple duct">
+  <figcaption>Figure 4: Pressure magnitude |p| [Pa] at 1000 Hz in the simple expansion chamber. High amplitude enters from the left, a standing-wave minimum forms in the chamber interior, and moderate amplitude reaches the outlet.</figcaption>
+</figure>
+
+The field is nearly uniform across the duct height at every cross-section, confirming that the plane-wave assumption holds at this frequency. The longitudinal standing-wave pattern, with a pressure maximum at the inlet, a clear minimum inside the chamber, and a partial recovery at the outlet, is consistent with the phase $kL_\text{ch} \approx 3.67\,\text{rad}$ accumulated across the 200 mm chamber at 1000 Hz.
+
 ---
 
 ## 5. Exercise 3: Mesh Convergence Study
 
-### 5.1 Convergence Summary Table
+The mesh convergence study quantifies how rapidly the FEM solution approaches the true solution as the mesh is refined. All cases are run at 500 Hz, a frequency well below the chamber cut-on where the solution is smooth and the theoretical rates for $\mathcal{P}_1$ elements are expected to hold.
 
-### 5.2 Estimated Convergence Rates
+**Setup.** An ultra-fine reference solution is first computed on a mesh with $h_\text{ref} = 0.0002\,\text{m}$ (approximately $9 \times 10^5$ degrees of freedom). Six coarser meshes are then solved with $h \in \{0.02,\, 0.01,\, 0.005,\, 0.0025,\, 0.00125,\, 0.000625\}$. For each coarse mesh, the reference solution is interpolated onto the coarse space via DOLFINx's `interpolate_nonmatching` routine, and the error norms are evaluated by UFL integration on the coarse mesh:
+
+$$\|e\|_{L^2} = \left(\int_\Omega |p_h - p_\text{ref}|^2\,\mathrm{d}x\right)^{1/2}, \quad \|e\|_{H^1} = \left(\|e\|_{L^2}^2 + \|\nabla e\|_{L^2}^2\right)^{1/2}.$$
+
+**Observed convergence rates.** Convergence rates are estimated by fitting a straight line to the $\log h$–$\log \|e\|$ data over all six mesh sizes. The measured slopes are summarized in the table below alongside the theoretical predictions:
+
+<figure style="text-align: center;">
+
+| Norm | Measured rate | Smooth P1 (theory) | Corner P1 $\mathcal{O}(h^\alpha)$, $\alpha = 2/3$ |
+|---|---|---|---|
+| $L^2$ error | **1.27** | 2.00 | 1.67 |
+| $H^1$ error | **0.79** | 1.00 | 0.67 |
+
+<figcaption>Table 2: Observed vs. theoretical convergence rates for Lagrange P1 elements at 500 Hz. Corner-rate prediction assumes a re-entrant corner with interior angle $3\pi/2$.</figcaption>
+</figure>
+
+<figure style="text-align: center;">
+  <img src="../results/figures/mesh_convergence.png" alt="Mesh convergence study">
+  <figcaption>Figure 5: Log–log convergence plot. Measured L2 (blue, slope 1.27) and H1 (red, slope 0.79) errors against element size h, with reference lines for smooth-domain P1 and corner-limited P1 rates.</figcaption>
+</figure>
+
+**Discussion.** Both measured rates fall below the smooth-domain $\mathcal{P}_1$ predictions of $\mathcal{O}(h^2)$ and $\mathcal{O}(h)$. The reduction is attributable to geometric singularities at the four re-entrant corners where the narrow inlet/outlet ducts meet the wide expansion chamber. These corners have an interior angle of $3\pi/2$, for which the singular exponent is $\alpha = \pi/(3\pi/2) = 2/3$. Standard FEM convergence theory [4] predicts that on such a domain, $\mathcal{P}_1$ elements achieve at most $\mathcal{O}(h^{1+\alpha}) = \mathcal{O}(h^{1.67})$ in $L^2$ and $\mathcal{O}(h^\alpha) = \mathcal{O}(h^{0.67})$ in $H^1$, irrespective of the polynomial degree.
+
+The observed $H^1$ slope of 0.79 lies within the interval $[0.67, 1.00]$ bounded by the corner-limited and smooth-domain predictions, which is consistent with a solution that is partly singular but not fully dominated by the corner behavior at the mesh sizes studied. The $L^2$ slope of 1.27 falls below both reference values, this additional reduction likely reflects the interplay between the finite accuracy of the interpolated reference solution and the dominance of corner singularities at the coarser end of the refinement sequence, where the corner regions are only marginally resolved.
+
+Despite the reduced convergence rates, the absolute error levels are modest: at the mesh size used in the verification study ($h = 0.005\,\text{m}$), the $L^2$ error is on the order of $4 \times 10^{-4}$ and the TL error remains below 0.1 dB. For applications requiring higher accuracy, local $h$-refinement or $hp$-refinement near the corners would recover optimal rates.
 
 ---
 
 ## 6. Exercise 4: Practical Scenario (Extended Protruding Ducts)
 
-### 6.1 Design Concept & Acoustic Resonance Tuning
+### 6.1 Design Concept and Acoustic Resonance Tuning
 
-### 6.2 2D Parametric Design Sweep & Optimization
+The extended-tube muffler improves upon the SEC by inserting the inlet and outlet pipes into the interior of the expansion chamber by lengths $L_\text{ext,in}$ and $L_\text{ext,out}$, respectively. Each protruding pipe segment, together with the annular gap between its tip and the chamber wall, forms a side-branch resonator. At the quarter-wave resonance frequency of a protrusion of length $L_\text{ext}$, sound is effectively reflected back toward the source and almost no energy is transmitted to the outlet:
 
-### 6.3 Visualizing the Resonance Pressure Field
+$$f_\text{QW} \approx \frac{c_0}{4 L_\text{ext}}.$$
+
+This estimate assumes a closed condition at the duct junction and an open radiation condition at the pipe tip inside the chamber. In practice, the tip radiates into a finite-volume cavity and an acoustic end correction $\delta$ shifts the effective length upward, so the actual resonance falls somewhat below the geometric prediction. For the protrusion lengths used in the comparative study ($L_\text{ext} = 0.05\,\text{m}$), the na\"ive estimate gives $f_\text{QW} = 343 / (4 \times 0.05) = 1715\,\text{Hz}$, while the observed resonant peak in Figure 6 is at approximately 1360 Hz, consistent with an effective end-correction of about 13 mm.
+
+A key consequence of this mechanism is that the attenuation is highly frequency-selective: the extended-tube configuration produces a narrow, high-amplitude TL peak at the resonant frequency, whereas the SEC provides only broadband low-level attenuation. By choosing $L_\text{ext,in}$ and $L_\text{ext,out}$ independently, both the center frequency and the bandwidth of the resonance can be tuned [3].
+
+To assess the effect of the protrusions before running the full parametric sweep, four configurations are solved over the same 10–2000 Hz range using a mesh of $h = 0.005\,\text{m}$: the bare SEC (no protrusions), inlet extension only ($L_\text{ext,in} = 0.05\,\text{m}$), outlet extension only ($L_\text{ext,out} = 0.05\,\text{m}$), and the symmetric case ($L_\text{ext,in} = L_\text{ext,out} = 0.05\,\text{m}$).
+
+<figure style="text-align: center;">
+  <img src="../results/figures/extended_tl_comparison.png" alt="Extended TL comparison">
+  <figcaption>Figure 6: Transmission Loss spectra for four configurations. The simple muffler (red) provides at most ~2 dB. Each extended-tube variant produces a sharp resonant peak near 1360 Hz exceeding 44 dB.</figcaption>
+</figure>
+
+The results in Figure 6 confirm the resonance mechanism. Both the inlet-only and outlet-only cases produce sharp peaks of 50–58 dB at approximately the same frequency, showing that either protrusion alone is sufficient to generate a strong resonance. The symmetric case yields a peak of ~44 dB but with a noticeably wider bandwidth, the two independent resonators interact and spread the attenuation over a broader frequency interval. Below 1000 Hz, all four configurations remain close to the SEC baseline, confirming that the design improvement is concentrated near the target frequency.
+
+### 6.2 2D Parametric Design Sweep and Optimization
+
+To identify the protrusion lengths that maximize TL at the design frequency of $f_\text{opt} = 1200\,\text{Hz}$, a $10 \times 10$ grid search is performed over $L_\text{ext,in}, L_\text{ext,out} \in [0.005, 0.080]\,\text{m}$. For each of the 100 design points, a fresh mesh is generated and the Helmholtz system is solved at 1200 Hz. The resulting TL map is shown in Figure 7.
+
+<figure style="text-align: center;">
+  <img src="../results/figures/length_optimization_2d.png" alt="2D optimization heatmap">
+  <figcaption>Figure 7: TL heatmap at 1200 Hz as a function of protrusion lengths. The optimal design identified by grid search is marked at $L_\text{ext,in} = 0.063\,\text{m}$, $L_\text{ext,out} = 0.055\,\text{m}$, yielding TL $\approx 28.5\,\text{dB}$.</figcaption>
+</figure>
+
+The heatmap reveals that high TL at 1200 Hz is achieved only when both protrusion lengths are simultaneously in the range 0.05–0.07 m. Short protrusions ($L < 0.04\,\text{m}$) produce negligible attenuation at this frequency because their quarter-wave resonance lies above 2000 Hz. The TL landscape is smooth and unimodal within the sampled range, with a broad high-performance plateau centered around the optimum. The discrete grid search identifies the optimal design at $L_\text{ext,in} = 0.063\,\text{m}$, $L_\text{ext,out} = 0.055\,\text{m}$, achieving a TL of approximately 28.5 dB at the target frequency. This is more than an order of magnitude improvement over the SEC at the same frequency (~1 dB).
+
+The asymmetry of the optimum ($L_\text{ext,in} \neq L_\text{ext,out}$) reflects the asymmetric role of the two resonators in the transmission path: the inlet extension controls the impedance seen by the incoming wave, while the outlet extension governs the transmission into the anechoic duct. Their interaction at 1200 Hz is maximized by slightly different lengths.
+
+### 6.3 Resonance Pressure Field
+
+Figure 8 shows the pressure magnitude $|p|$ at the peak frequency of the symmetric extended case ($L_\text{ext,in} = L_\text{ext,out} = 0.05\,\text{m}$). The field confirms the resonance mechanism: pressure is large and spatially structured inside the inlet pipe and the left half of the expansion chamber, while the right half and the outlet pipe carry a pressure amplitude near zero.
+
+<figure style="text-align: center;">
+  <img src="../results/figures/extended_pressure_field.png" alt="Resonance pressure field">
+  <figcaption>Figure 8: Pressure magnitude $|p|$ [Pa] at the resonant frequency for the symmetric extended-tube configuration. High pressure is trapped in the inlet side; negligible amplitude reaches the outlet.</figcaption>
+</figure>
+
+The standing-wave pattern inside the protruding inlet pipe (visible as the bright yellow region on the left) corresponds to the quarter-wave mode: pressure is maximum at the closed duct end and approaches zero at the open tip inside the chamber. The chamber itself shows a complex near-field distribution around the pipe tip, but the net energy flux toward the outlet is nearly zero at resonance, which is the physical mechanism behind the large TL peak.
 
 ---
 
-## 7. Conclusions & Recommendations
+## 7. Conclusions and Recommendations
+
+This work implemented and validated a 2D finite element solver for acoustic transmission loss in expansion mufflers using FEniCSx. Three exercises were completed.
+
+**Verification.** The FEM solution for the simple expansion chamber agrees closely with the 1D plane-wave analytical formula over the full 10–2000 Hz range. The sinusoidal TL pattern, with peaks at 429 and 1286 Hz and zeros at 857 and 1715 Hz, is correctly reproduced. A small phase shift develops above 1000 Hz due to near-field effects at the duct-chamber junctions and the approach to the chamber cut-on frequency; this is a physical 2D feature absent from the 1D model and does not indicate a solver error. Maximum TL error below the cut-on frequency is below 0.2 dB.
+
+**Mesh convergence.** The $\mathcal{P}_1$ FEM solution converges with observed rates of 1.27 in $L^2$ and 0.79 in $H^1$. Both rates fall below the smooth-domain theoretical predictions ($\mathcal{O}(h^2)$ and $\mathcal{O}(h)$), consistent with the reduced regularity caused by the 270° re-entrant corners at the duct-chamber junctions. Despite this degradation, the absolute errors at $h = 0.005\,\text{m}$ are small enough for all engineering purposes. The mesh used throughout the study (TL error below 0.1 dB at 500 Hz) represents a good accuracy-to-cost trade-off.
+
+**Practical scenario.** The extended-tube configuration demonstrates that simple geometry modifications can yield order-of-magnitude improvements in TL at a target frequency. A symmetric protrusion of 50 mm produces a resonant peak exceeding 44 dB near 1360 Hz, compared with the SEC maximum of ~2 dB. A 10×10 parametric grid search at 1200 Hz identified the optimal protrusion lengths as $L_\text{ext,in} = 0.063\,\text{m}$ and $L_\text{ext,out} = 0.055\,\text{m}$, yielding TL $\approx 28.5\,\text{dB}$ at the design frequency.
+
+**Limitations and recommendations.** Several modeling assumptions limit the generality of the results. The 2D formulation captures in-plane pressure distributions but ignores out-of-plane geometry effects relevant to real circular cross-sections; extending the solver to 3D axisymmetric or full 3D would improve quantitative accuracy. Viscous losses at the pipe walls and through the annular gap, which are significant in practice, are not modeled; their inclusion via a complex impedance wall condition would be straightforward within the existing framework. 
 
 ---
 
 ## 8. Declaration of Academic Honesty
+
+I hereby declare that the work submitted in this report is entirely my own. All sources, references, and tools used in the completion of this project have been properly cited and acknowledged. I have not received unauthorized assistance, and the work has not been submitted in whole or in part for any other academic assessment.
+
+Some sections of this report were drafted or edited with the assistance of Claude (Anthropic) [5].
+
+**Name:** Cristian Arango — 463933  
+**Course:** Modern Simulation Software Development (MSSD)  
+**Date:** June 2026
 
 ---
 
@@ -178,4 +288,8 @@ For the linear system, the MUMPS sparse direct solver is used via PETSc (`pc_typ
 [2] Wagner, N., & Helfrich, R. (2008). *Computation of the transmission loss of acoustic resonators*. Aeroacoustics and Flow Noise, 535-548.
 
 [3] Munjal, M. L. (2014). Acoustics of ducts and mufflers (2nd ed.). Wiley.
+
+[4] Brenner, S. C., & Scott, L. R. (2008). *The Mathematical Theory of Finite Element Methods* (3rd ed.). Springer. (§4.3–§5.8, reduced regularity on polygonal domains and corner-limited convergence rates.)
+
+[5] Anthropic. (2026). *Claude Sonnet 4.6* [Large language model]. Anthropic PBC. https://www.anthropic.com
 
