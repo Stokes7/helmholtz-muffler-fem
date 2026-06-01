@@ -41,17 +41,7 @@ def main():
         shutil.copytree('report/assets', 'public/assets')
         print("[1b/3] Successfully copied 'report/assets/' to 'public/assets/'")
 
-    # 4. Read and compile README.md
-    readme_path = 'README.md'
-    if os.path.exists(readme_path):
-        with open(readme_path, 'r', encoding='utf-8') as r:
-            readme_html = markdown.markdown(r.read(), extensions=['tables', 'fenced_code'])
-        print("[2/3] Compiled README.md successfully.")
-    else:
-        print(f"[ERROR] '{readme_path}' not found!")
-        sys.exit(1)
-
-    # 5. Read and compile report/report.md (replacing relative image paths)
+    # 4. Read and compile report/report.md (replacing relative image paths)
     report_path = 'report/report.md'
     if os.path.exists(report_path):
         with open(report_path, 'r', encoding='utf-8') as r:
@@ -59,7 +49,7 @@ def main():
             # Correct image paths from ../results/figures to results/figures for the hosted folder
             report_raw = report_raw.replace('../results/figures/', 'results/figures/')
             report_html = markdown.markdown(report_raw, extensions=['tables', 'fenced_code'])
-        print("[3/3] Compiled report/report.md successfully.")
+        print("[2/2] Compiled report/report.md successfully.")
     else:
         print(f"[ERROR] '{report_path}' not found!")
         sys.exit(1)
@@ -84,11 +74,7 @@ def main():
         body {{ padding: 2rem; font-family: system-ui, -apple-system, sans-serif; }}
         pre {{ background: #1e1e1e; padding: 1.2rem; border-radius: 6px; overflow-x: auto; border: 1px solid #333; }}
         code {{ color: #ff79c6; background: #282a36; padding: 0.2rem 0.4rem; border-radius: 4px; }}
-        .header-container {{ display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 1.5rem; margin-bottom: 2rem; }}
-        .tabs-nav {{ display: flex; gap: 0.5rem; }}
-        .tab-btn {{ cursor: pointer; }}
-        .tab-content {{ display: none; }}
-        .tab-content.active {{ display: block; }}
+        .header-container {{ border-bottom: 1px solid #444; padding-bottom: 1.5rem; margin-bottom: 2rem; }}
         img {{ border-radius: 8px; border: 1px solid #444; margin: 1.5rem 0; max-width: 100%; height: auto; }}
         table {{ width: 100%; border-collapse: collapse; margin: 1.5rem 0; }}
         th, td {{ border: 1px solid #444; padding: 0.8rem; text-align: left; }}
@@ -98,44 +84,22 @@ def main():
 </head>
 <body class="container">
     <header class="header-container">
-        <div>
-            <h1 style="margin:0; font-size: 1.8rem;">Helmholtz Acoustic Muffler FEM</h1>
-            <p style="margin:0; color: #888;">MSSD Course Project 01 — Finite Element Method</p>
-        </div>
-        <div class="tabs-nav">
-            <button id="btn-report" class="tab-btn" onclick="showTab('report')">Scientific Report</button>
-            <button id="btn-guide" class="tab-btn secondary" onclick="showTab('guide')">Execution Guide (README)</button>
-        </div>
+        <h1 style="margin:0; font-size: 1.8rem;">Helmholtz Acoustic Muffler FEM</h1>
+        <p style="margin:0; color: #888;">MSSD Course Project 01 — Finite Element Method</p>
     </header>
     <main>
-        <div id="tab-report" class="tab-content active">
-            {report_html}
-        </div>
-        <div id="tab-guide" class="tab-content">
-            {readme_html}
-        </div>
+        {report_html}
     </main>
     <footer style="text-align: center; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #444; color: #666; font-size: 0.9rem;">
         <p>© 2026 RWTH Aachen University — Modern Simulation Software Development</p>
     </footer>
-    <script>
-        function showTab(tabId) {{
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.add('secondary'));
-            
-            document.getElementById('tab-' + tabId).classList.add('active');
-            document.getElementById('btn-' + tabId).classList.remove('secondary');
-        }}
-        // Set default tab to Report
-        showTab('report');
-    </script>
 </body>
 </html>'''
 
     with open('public/index.html', 'w', encoding='utf-8') as w:
         w.write(html_content)
     
-    print("SUCCESS: public/index.html generated with LaTeX!")
+    print("SUCCESS: public/index.html generated!")
     print("============================================================")
 
 if __name__ == '__main__':
