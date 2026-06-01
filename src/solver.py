@@ -42,11 +42,11 @@ class HelmholtzSolver:
         self.a = (
               ufl.inner(ufl.grad(self.p), ufl.grad(self.v)) * self.dx
             - self.k**2 * ufl.inner(self.p, self.v) * self.dx
-            + 1j * self.omega * self.rho0 / self.Z * ufl.inner(self.p, self.v) * self.ds(2)
+            - 1j * self.omega * self.rho0 / self.Z * ufl.inner(self.p, self.v) * self.ds(2)
         )
         
         # Linear form L (inward normal velocity boundary at inlet Gamma_inlet)
-        self.L = -1j * self.omega * self.rho0 * self.vn * ufl.conj(self.v) * self.ds(1)
+        self.L = 1j * self.omega * self.rho0 * self.vn * ufl.conj(self.v) * self.ds(1)
         
         # Solution function
         self.p_h = fem.Function(self.V)
