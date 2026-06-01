@@ -109,8 +109,8 @@ def main():
     <script>
         MathJax = {{
             tex: {{
-                inlineMath: [['\\(', '\\)']],
-                displayMath: [['\\[', '\\]']]
+                inlineMath: [['\\\\(', '\\\\)']],
+                displayMath: [['\\\\[', '\\\\]']]
             }}
         }};
     </script>
