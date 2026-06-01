@@ -21,17 +21,17 @@ This report evaluates two muffler configurations using a 2D FEM simulation imple
 
 The first case, shown in Figure 1, corresponds to a Simple Expansion Chamber (SEC), a straight duct that widens into a larger volume before narrowing back to the outlet. At the inlet boundary $\Gamma_\text{in}$, a uniform acoustic velocity is imposed, representing a plane wave entering the domain. At the outlet boundary $\Gamma_\text{out}$, a non-reflecting radiation condition is applied to avoid spurious reflections. The top and bottom wall sections, $\Gamma_\text{wall}$, are treated as rigid boundaries.
 
-<figure style="text-align: center;">
+<!-- <figure style="text-align: center;">
   <img src="assets/simple_duct_diagram.png" alt="Simple expansion chamber">
   <figcaption>Figure 1: Geometry and boundary conditions of the simple expansion chamber (SEC).</figcaption>
-</figure>
+</figure> -->
 
 The second case, shown in Figure 2, introduces an extended-tube chamber configuration, where the inlet and outlet pipes are extended into the interior of the chamber. The boundary conditions remain identical to the SEC case, imposed velocity at $\Gamma_\text{in}$ and a radiation condition at $\Gamma_\text{out}$, but the internal geometry changes significantly. The protruding pipes with lengths $L_{ext, in}$ and $L_{ext, out}$ act as acoustic resonators that interfere with the standing wave pattern inside the chamber, filling in the frequency gaps where the SEC provides no attenuation and resulting in a broader and more consistent noise reduction across the frequency range [3].
 
-<figure style="text-align: center;">
+<!-- <figure style="text-align: center;">
   <img src="assets/extended_duct_diagram.png" alt="Extended duct muffler">
   <figcaption>Figure 2: Geometry and boundary conditions of the extended-tube chamber configuration.</figcaption>
-</figure>
+</figure> -->
 
 The SEC is first verified against the 1D analytical plane-wave solution over the 10–2000 Hz range, and a mesh convergence study is performed to confirm numerical accuracy. The extended-tube configuration is then used as the practical scenario, where a parametric sweep over the protrusion lengths $L_\text{ext,in}$ and $L_\text{ext,out}$ is carried out to identify designs that maximize attenuation at a target frequency.
 
@@ -157,10 +157,10 @@ with $m = 2$ and $L_\text{ch} = 0.20\,\text{m}$. This expression predicts a peri
 
 **Results and discussion.** Figure 3 overlays the FEM result (solid red) with the analytical prediction (dashed black).
 
-<figure style="text-align: center;">
+<!-- <figure style="text-align: center;">
   <img src="../results/figures/validation_tl_sweep.png" alt="Validation TL sweep">
   <figcaption>Figure 3: Transmission Loss over 10–2000 Hz. FEM solution (Lagrange P1, h = 0.005 m) compared with the 1D analytical plane-wave formula.</figcaption>
-</figure>
+</figure> -->
 
 Below 800 Hz the two curves are in a good agreement, confirming that the weak form, boundary conditions, and TL post-processing are correctly implemented. The periodic pattern with peaks near 400 Hz and transparent frequencies near 857 Hz is reasonable reproduced.
 
@@ -168,10 +168,10 @@ A visible discrepancy develops above 1000 Hz: the second FEM peak near 1350 Hz a
 
 Figure 4 illustrates the pressure magnitude $|p|$ computed at 1000 Hz, a frequency between the first and second TL peaks where the chamber supports a partial standing wave.
 
-<figure style="text-align: center;">
+<!-- <figure style="text-align: center;">
   <img src="../results/figures/pressure_field_500Hz.png" alt="Pressure field at 1000 Hz — simple duct">
   <figcaption>Figure 4: Pressure magnitude |p| [Pa] at 1000 Hz in the simple expansion chamber. High amplitude enters from the left, a standing-wave minimum forms in the chamber interior, and moderate amplitude reaches the outlet.</figcaption>
-</figure>
+</figure> -->
 
 The field is nearly uniform across the duct height at every cross-section, confirming that the plane-wave assumption holds at this frequency. The longitudinal standing-wave pattern, with a pressure maximum at the inlet, a clear minimum inside the chamber, and a partial recovery at the outlet, is consistent with the phase $kL_\text{ch} \approx 3.67\,\text{rad}$ accumulated across the 200 mm chamber at 1000 Hz.
 
@@ -197,10 +197,10 @@ $$\|e\|_{L^2} = \left(\int_\Omega |p_h - p_\text{ref}|^2\,\mathrm{d}x\right)^{1/
 <figcaption>Table 2: Observed vs. theoretical convergence rates for Lagrange P1 elements at 500 Hz. Corner-rate prediction assumes a re-entrant corner with interior angle $3\pi/2$.</figcaption>
 </figure>
 
-<figure style="text-align: center;">
+<!-- <figure style="text-align: center;">
   <img src="../results/figures/mesh_convergence.png" alt="Mesh convergence study">
   <figcaption>Figure 5: Log–log convergence plot. Measured L2 (blue, slope 1.27) and H1 (red, slope 0.79) errors against element size h, with reference lines for smooth-domain P1 and corner-limited P1 rates.</figcaption>
-</figure>
+</figure> -->
 
 **Discussion.** Both measured rates fall below the smooth-domain $\mathcal{P}_1$ predictions of $\mathcal{O}(h^2)$ and $\mathcal{O}(h)$. The reduction is attributable to geometric singularities at the four re-entrant corners where the narrow inlet/outlet ducts meet the wide expansion chamber. These corners have an interior angle of $3\pi/2$, for which the singular exponent is $\alpha = \pi/(3\pi/2) = 2/3$. Standard FEM convergence theory [4] predicts that on such a domain, $\mathcal{P}_1$ elements achieve at most $\mathcal{O}(h^{1+\alpha}) = \mathcal{O}(h^{1.67})$ in $L^2$ and $\mathcal{O}(h^\alpha) = \mathcal{O}(h^{0.67})$ in $H^1$, irrespective of the polynomial degree.
 
@@ -224,10 +224,10 @@ A key consequence of this mechanism is that the attenuation is highly frequency-
 
 To assess the effect of the protrusions before running the full parametric sweep, four configurations are solved over the same 10–2000 Hz range using a mesh of $h = 0.005\,\text{m}$: the bare SEC (no protrusions), inlet extension only ($L_\text{ext,in} = 0.05\,\text{m}$), outlet extension only ($L_\text{ext,out} = 0.05\,\text{m}$), and the symmetric case ($L_\text{ext,in} = L_\text{ext,out} = 0.05\,\text{m}$).
 
-<figure style="text-align: center;">
+<!-- <figure style="text-align: center;">
   <img src="../results/figures/extended_tl_comparison.png" alt="Extended TL comparison">
   <figcaption>Figure 6: Transmission Loss spectra for four configurations. The simple muffler (red) provides at most ~2 dB. Each extended-tube variant produces a sharp resonant peak near 1360 Hz exceeding 44 dB.</figcaption>
-</figure>
+</figure> -->
 
 The results in Figure 6 confirm the resonance mechanism. Both the inlet-only and outlet-only cases produce sharp peaks of 50–58 dB at approximately the same frequency, showing that either protrusion alone is sufficient to generate a strong resonance. The symmetric case yields a peak of ~44 dB but with a noticeably wider bandwidth, the two independent resonators interact and spread the attenuation over a broader frequency interval. Below 1000 Hz, all four configurations remain close to the SEC baseline, confirming that the design improvement is concentrated near the target frequency.
 
@@ -235,10 +235,10 @@ The results in Figure 6 confirm the resonance mechanism. Both the inlet-only and
 
 To identify the protrusion lengths that maximize TL at the design frequency of $f_\text{opt} = 1200\,\text{Hz}$, a $10 \times 10$ grid search is performed over $L_\text{ext,in}, L_\text{ext,out} \in [0.005, 0.080]\,\text{m}$. For each of the 100 design points, a fresh mesh is generated and the Helmholtz system is solved at 1200 Hz. The resulting TL map is shown in Figure 7.
 
-<figure style="text-align: center;">
+<!-- <figure style="text-align: center;">
   <img src="../results/figures/length_optimization_2d.png" alt="2D optimization heatmap">
   <figcaption>Figure 7: TL heatmap at 1200 Hz as a function of protrusion lengths. The optimal design identified by grid search is marked at $L_\text{ext,in} = 0.063\,\text{m}$, $L_\text{ext,out} = 0.055\,\text{m}$, yielding TL $\approx 28.5\,\text{dB}$.</figcaption>
-</figure>
+</figure> -->
 
 The heatmap reveals that high TL at 1200 Hz is achieved only when both protrusion lengths are simultaneously in the range 0.05–0.07 m. Short protrusions ($L < 0.04\,\text{m}$) produce negligible attenuation at this frequency because their quarter-wave resonance lies above 2000 Hz. The TL landscape is smooth and unimodal within the sampled range, with a broad high-performance plateau centered around the optimum. The discrete grid search identifies the optimal design at $L_\text{ext,in} = 0.063\,\text{m}$, $L_\text{ext,out} = 0.055\,\text{m}$, achieving a TL of approximately 28.5 dB at the target frequency. This is more than an order of magnitude improvement over the SEC at the same frequency (~1 dB).
 
@@ -248,10 +248,10 @@ The asymmetry of the optimum ($L_\text{ext,in} \neq L_\text{ext,out}$) reflects 
 
 Figure 8 shows the pressure magnitude $|p|$ at the peak frequency of the symmetric extended case ($L_\text{ext,in} = L_\text{ext,out} = 0.05\,\text{m}$). The field confirms the resonance mechanism: pressure is large and spatially structured inside the inlet pipe and the left half of the expansion chamber, while the right half and the outlet pipe carry a pressure amplitude near zero.
 
-<figure style="text-align: center;">
+<!-- <figure style="text-align: center;">
   <img src="../results/figures/extended_pressure_field.png" alt="Resonance pressure field">
   <figcaption>Figure 8: Pressure magnitude $|p|$ [Pa] at the resonant frequency for the symmetric extended-tube configuration. High pressure is trapped in the inlet side; negligible amplitude reaches the outlet.</figcaption>
-</figure>
+</figure> -->
 
 The standing-wave pattern inside the protruding inlet pipe (visible as the bright yellow region on the left) corresponds to the quarter-wave mode: pressure is maximum at the closed duct end and approaches zero at the open tip inside the chamber. The chamber itself shows a complex near-field distribution around the pipe tip, but the net energy flux toward the outlet is nearly zero at resonance, which is the physical mechanism behind the large TL peak.
 
