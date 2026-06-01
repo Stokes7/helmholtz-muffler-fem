@@ -17,7 +17,7 @@ Exhaust noise from internal combustion engines is widely recognized as a major e
 
 This report evaluates two muffler configurations using a 2D FEM simulation implemented in FEniCSx, both analyzed over a swept frequency range to obtain their respective TL spectra.
 
-The first case, shown in Figure 1, corresponds to a Simple Expansion Chamber (SEC), a straight duct that widens into a larger volume before narrowing back to the outlet. At the inlet boundary $\Gamma_\text{in}$, a uniform acoustic velocity is imposed, representing a plane wave entering the domain. At the outlet boundary $\Gamma_\text{out}$, a non-reflecting radiation condition is applied to avoid spurious reflections. The top and bottom walls sections $\Gamma_\text{wall}$, are treated as rigid boundaries.
+The first case, shown in Figure 1, corresponds to a Simple Expansion Chamber (SEC), a straight duct that widens into a larger volume before narrowing back to the outlet. At the inlet boundary $\Gamma_\text{in}$, a uniform acoustic velocity is imposed, representing a plane wave entering the domain. At the outlet boundary $\Gamma_\text{out}$, a non-reflecting radiation condition is applied to avoid spurious reflections. The top and bottom wall sections, $\Gamma_\text{wall}$, are treated as rigid boundaries.
 
 <figure style="text-align: center;">
   <img src="assets/simple_duct_diagram.png" alt="Simple expansion chamber">
@@ -65,7 +65,7 @@ The boundary of the domain decomposes into three disjoint parts:
 
 $$\partial \Omega = \Gamma_\text{in} \cup \Gamma_\text{out} \cup \Gamma_\text{wall},$$
 
-Which are described as follow:
+which are described as follows:
 
 **Inlet $\Gamma_\text{in}$: prescribed normal velocity (Neumann):** A uniform inward acoustic velocity $v_n$ is imposed at the inlet, representing an incoming plane wave. From the linearized momentum equation, this translates to a Neumann condition on the pressure gradient:
 
@@ -99,9 +99,9 @@ $$a(p, v) = L(v) \quad \forall\, v \in V,$$
 
 where the bilinear and linear forms are:
 
-$$a(p, v) = \int_\Omega \nabla p \cdot \nabla v \, dx - k^2 \int_\Omega p\, v \, dx + \frac{i\omega\rho_0}{Z} \int_{\Gamma_\text{out}} p\, v \, ds,$$
+$$a(p, v) = \int_\Omega \nabla p \cdot \nabla v \, dx - k^2 \int_\Omega p\, v \, dx - \frac{i\omega\rho_0}{Z} \int_{\Gamma_\text{out}} p\, v \, ds,$$
 
-$$L(v) = -i\omega\rho_0 v_n \int_{\Gamma_\text{in}} \bar{v} \, ds.$$
+$$L(v) = i\omega\rho_0 v_n \int_{\Gamma_\text{in}} \bar{v} \, ds.$$
 
 <!-- The Robin term on $\Gamma_\text{out}$ appears naturally in the bilinear form without requiring any special treatment: it is a natural boundary condition. -->
 
@@ -129,15 +129,15 @@ $$p_\text{inc} = \frac{\bar{p}_\text{in} - \rho_0 c_0 v_n}{2}.$$
 
 ## 3. Modular Implementation and Solver Choices
 
-The project is organized into four directories with clearly separated responsibilities. The `gmsh/` folder handles geometry and mesh generation, `src/` contains the FEM solver, `scripts/` holds the parametric studies, and `test/` contains the automated tests. This separation makes it straightforward to swap geometries without touching the solver, or to run individual studies without executing the full pipeline.
+The project is organized into four directories. The `gmsh/` folder handles geometry and mesh generation, `src/` contains the FEM solver, `scripts/` holds the parametric studies, and `test/` contains the automated tests. This separation makes it straightforward to swap geometries without touching the solver, or to run individual studies without executing the full pipeline.
 
-**Mesh generation.** Both geometries (the simple chamber and the extended-tube variant) are built programmatically using the Gmsh Python API with the OpenCASCADE (OCC) kernel. Rectangular regions are fused or subtracted via boolean operations, which keeps the geometry definition compact and fully reproducible from a single function call. Boundary subsets are assigned integer tags (1: inlet, 2: outlet, 3: walls) directly in Gmsh and carried through to DOLFINx via `gmshio.model_to_mesh`, so the solver always applies boundary conditions by tag rather than by coordinate lookup.
+**Mesh generation.** Both geometries (the simple chamber and the extended-tube version) are built in a reproducible way using the Gmsh Python API with the OpenCASCADE (OCC) kernel. Rectangular regions are fused or subtracted via boolean operations, which keeps the geometry definition compact and fully reproducible from a single function call. Boundary subsets are assigned integer tags (1: inlet, 2: outlet, 3: walls) directly in Gmsh and carried through to DOLFINx via `gmshio.model_to_mesh`, so the solver always applies boundary conditions by tag rather than by coordinate lookup.
 
 **Solver design.** The `HelmholtzSolver` class in `src/solver.py` sets up the weak form once at construction time. The frequency-dependent quantities $\omega$ and $k$ are declared as `fem.Constant` objects, so solving at a new frequency only requires updating two numbers: the UFL forms and the sparse matrix sparsity pattern are never recompiled. This makes the frequency sweep across hundreds of points practical without significant overhead.
 
 For the linear system, the MUMPS sparse direct solver is used via PETSc (`pc_type: lu`, `pc_factor_mat_solver_type: mumps`). For the mesh sizes used here (a few thousand DOFs), a direct solver is more reliable and faster than an iterative one, since there is no need to tune preconditioners or worry about convergence for a complex-valued indefinite system.
 
-**Automated testing.** Three pytest tests in `test/test_solver.py` verify the most basic contracts: that the simple geometry produces a valid mesh with the correct tags, that the collision check in the extended geometry raises an error when the protrusions exceed the chamber length, and that the solver returns a physically plausible TL value (between −5 and 40 dB) at a test frequency. These checks are intentionally lightweight: they are meant to catch configuration errors, not to replace the numerical verification in Section 4.
+**Automated testing.** Three pytest tests in `test/test_solver.py` verify some basic test cases: that the simple geometry produces a valid mesh with the correct tags, that the collision check in the extended geometry raises an error when the protrusions exceed the chamber length, and that the solver returns a physically plausible TL value (between −5 and 40 dB) at a test frequency. These checks are intended to be lightweight, rather than complete numerical verification, since this is already covered in Section 4.
 
 **Reproducibility.** The full Conda environment is pinned in `environment.yml`, including the complex-valued PETSc build required by DOLFINx. A single shell script `run_all.sh` runs the tests and all three studies in sequence, and handles the `CC=gcc` override needed on HPC clusters where Intel compilers are loaded by default. A GitHub Actions pipeline runs this script on every push to `main` and deploys the compiled report to GitHub Pages.
 
@@ -175,7 +175,7 @@ For the linear system, the MUMPS sparse direct solver is used via PETSc (`pc_typ
 
 [1] Ezzeddin, M. M., & Jolgaf, M. (2017). *Acoustic Analysis of a Perforated-pipe Muffler Using ANSYS*. University Bulletin-ISSUE, 19(4).
 
-[2] Wagner, N., & Helfrich, R. (2008). Computation of the transmission loss of acoustic resonators. Aeroacoustics and Flow Noise, 535-548.
+[2] Wagner, N., & Helfrich, R. (2008). *Computation of the transmission loss of acoustic resonators*. Aeroacoustics and Flow Noise, 535-548.
 
 [3] Munjal, M. L. (2014). Acoustics of ducts and mufflers (2nd ed.). Wiley.
 
