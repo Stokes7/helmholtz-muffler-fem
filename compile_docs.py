@@ -8,6 +8,7 @@ import os
 import shutil
 import sys
 
+
 def main():
     # 1. Check if markdown package is installed
     try:
@@ -48,7 +49,13 @@ def main():
             report_raw = r.read()
             # Correct image paths from ../results/figures to results/figures for the hosted folder
             report_raw = report_raw.replace('../results/figures/', 'results/figures/')
-            report_html = markdown.markdown(report_raw, extensions=['tables', 'fenced_code'])
+            report_html = markdown.markdown(
+                        report_raw,
+                        extensions=['tables', 'fenced_code', 'pymdownx.arithmatex'],
+                        extension_configs={
+                                    'pymdownx.arithmatex': {'generic': True}}
+                        )
+
         print("[2/2] Compiled report/report.md successfully.")
     else:
         print(f"[ERROR] '{report_path}' not found!")
@@ -64,9 +71,9 @@ def main():
     <script>
         MathJax = {{
             tex: {{
-                inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
-                displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
-            }}
+                inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']]
+        }}
         }};
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
