@@ -1,7 +1,7 @@
 # Finite Element Simulation and Design Optimization of a 2D Helmholtz Acoustic Muffler
 
 **Course:** Modern Simulation Software Development (MSSD)  
-**Name:** Cristian Arango - 463933
+**Name:** Cristian Arango - 463933  
 **Institution:** RWTH Aachen University  
 **Date:** May 2026  
 
