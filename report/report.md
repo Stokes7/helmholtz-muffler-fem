@@ -9,6 +9,8 @@
 
 ## Abstract
 
+A 2D finite element solver for acoustic Transmission Loss (TL) in expansion chamber mufflers is developed using FEniCSx, with Lagrange $\mathcal{P}_1$ elements on Gmsh-generated meshes and a MUMPS direct solver for the complex-valued Helmholtz system. The simple expansion chamber is verified against the 1D plane-wave analytical solution (error below 0.2 dB up to 1715 Hz), and a mesh convergence study confirms reduced rates of 1.27 in $L^2$ and 0.79 in $H^1$, consistent with corner singularities at the 270° duct-chamber junctions. Applied to an extended-tube configuration, the solver shows that 50 mm protrusions raise the peak TL from ~2 dB to over 44 dB via quarter-wave resonance; a $10 \times 10$ parametric sweep at 1200 Hz identifies an optimal design at $L_\text{ext,in} = 0.063\,\text{m}$, $L_\text{ext,out} = 0.055\,\text{m}$, achieving TL $\approx 28.5\,\text{dB}$.
+
 ---
 
 ## 1. Introduction and Physical Setup
