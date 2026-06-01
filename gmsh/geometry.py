@@ -110,7 +110,7 @@ def generate_muffler_mesh(h_size, output_file=None, recombine_quads=True):
      
     # Write the mesh to disk in gmsh format (.msh).
     if output_file:
-        gmsh.write(output_file)
+        gmsh.write(str(output_file))
         print(f"\nMesh written to: {output_file}")
         
     domain, cell_tags, facet_tags, _, _, _ = dolfinx_gmsh.model_to_mesh(
