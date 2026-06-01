@@ -1,17 +1,19 @@
 # %% ── 1. Import Libraries ──────────────────────────────────
-import os
 
-import matplotlib
 
-matplotlib.use("Agg")  # Run headless without GUI windows
+# matplotlib.use("Agg")  # Run headless without GUI windows
 import sys
+
+# Import our modular geometry and solver components!
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Import our modular geometry and solver components!
-from pathlib import Path
-project_root = Path(__file__).resolve().parent.parent
+try:
+    project_root = Path(__file__).resolve().parent.parent
+except NameError:
+    project_root = Path.cwd()
 
 sys.path.append(str(project_root / "gmsh"))
 sys.path.append(str(project_root / "src"))
@@ -69,4 +71,24 @@ plt.tight_layout()
 fig_output = figures_dir / "validation_tl_sweep.png"
 plt.savefig(str(fig_output), dpi=150)
 print(f"\nSweep validation plot successfully saved to: {fig_output}")
+
+# %% ─── 6. Plot pressure field at 500 Hz ────────────────────────────────────────────────────────
+import pyvista as pv
+from dolfinx import plot
+
+solver.solve(500.0)
+
+topology, cell_types, geometry = plot.vtk_mesh(solver.V)
+grid = pv.UnstructuredGrid(topology, cell_types, geometry)
+grid.point_data["|p|"] = np.abs(solver.p_h.x.array)
+
+plotter = pv.Plotter(window_size=(500, 400), off_screen=True)
+plotter.add_mesh(grid.copy(), scalars="|p|", cmap="viridis", show_edges=False)
+plotter.add_text("|p| at 500 Hz", font_size=10)
+plotter.view_xy()
+
+pressure_output = figures_dir / "pressure_field_500Hz.png"
+plotter.screenshot(str(pressure_output))
+print(f"Pressure field saved to: {pressure_output}")
+
 # %%

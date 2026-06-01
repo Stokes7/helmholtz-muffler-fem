@@ -10,7 +10,10 @@ import numpy as np
 
 # Append paths to search local modules
 from pathlib import Path
-project_root = Path(__file__).resolve().parent.parent
+try:
+    project_root = Path(__file__).resolve().parent.parent
+except NameError:
+    project_root = Path.cwd()
 
 sys.path.append(str(project_root / "gmsh"))
 sys.path.append(str(project_root / "src"))

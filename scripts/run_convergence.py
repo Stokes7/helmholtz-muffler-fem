@@ -14,7 +14,10 @@ from mpi4py import MPI
 
 # Import our modular geometry and solver components!
 from pathlib import Path
-project_root = Path(__file__).resolve().parent.parent
+try:
+    project_root = Path(__file__).resolve().parent.parent
+except NameError:
+    project_root = Path.cwd()
 
 sys.path.append(str(project_root / "gmsh"))
 sys.path.append(str(project_root / "src"))
